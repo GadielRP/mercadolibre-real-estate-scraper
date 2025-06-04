@@ -1,0 +1,45 @@
+# MercadoLibre API Collector - Dependencies
+# Core API and HTTP libraries
+requests>=2.31.0
+httpx>=0.25.0
+
+# Data processing and validation
+pydantic>=2.5.0
+polars>=0.20.0
+
+# Database connectivity
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+
+# Web scraping
+beautifulsoup4>=4.12.0
+playwright>=1.52.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Optional: Data analysis
+pandas>=2.1.0
+numpy>=1.25.0
+
+# Configuration and Environment
+pydantic-settings>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Utilities
+rich>=13.5.0           # Beautiful terminal output
+typer>=0.9.0          # CLI interface
+loguru>=0.7.0         # Better logging
+tenacity>=8.2.0       # Retry logic
+
+# Development tools
+black>=23.7.0         # Code formatting
+isort>=5.12.0         # Import sorting
+mypy>=1.5.0          # Type checking 

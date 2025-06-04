@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Environment variables
+.env
+.env.local
+
+# IDE files (keep local settings, don't upload to GitHub)
+.cursor/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data (uncomment next line if you DON'T want to upload collected data)
+# data/
+
+# Old experimental scripts (uncomment to hide from GitHub)
+property_collector_v1.py
+property_collector_v2.py
+public_property_collector.py
+working_property_collector.py
+investigate_403_error.py
+debug_auth.py
+test_credentials.py
+api_test.py
+api_test_public.py
+env_example.txt
+setup_env.py
+extrae_html_con_operacion.py
+OFICIAL_Scrolling_instalacion_extraccion_links_v2.py
