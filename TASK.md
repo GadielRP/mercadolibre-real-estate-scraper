@@ -37,15 +37,14 @@
 - [x] ✅ Investigar documentación oficial API MercadoLibre
 - [x] ✅ Identificar endpoints disponibles para inmuebles
 - [x] ✅ Mapear campos disponibles vs requeridos
-- [ ] 📝 Crear diagrama de flujo del proceso OAuth 2.0
-- [ ] 📝 Documentar estructura de datos de respuestas JSON
+
 
 ### 1.2 Configuración de Cuenta de Desarrollador
 - [x] ✅ Crear cuenta en https://developers.mercadolibre.com.ar/
 - [x] ✅ Crear aplicación "Real Estate Data Collector" (Client ID: 4998734959727106)
-- [ ] 🔧 Completar configuración de seguridad de la aplicación
-- [ ] 🔧 Obtener SECRET_KEY y configurar redirect_uri
-- [ ] 🔧 Actualizar env_example.txt con nuevas variables
+- [x] 🔧 Completar configuración de seguridad de la aplicación
+- [x] 🔧 Obtener SECRET_KEY y configurar redirect_uri
+- [x] 🔧 Actualizar env_example.txt con nuevas variables
 
 **Estimado:** 2-3 horas
 
@@ -161,10 +160,10 @@ Después de una investigación exhaustiva (8 horas), se ha determinado que **la 
 
 ### 📋 **PRÓXIMOS PASOS SUGERIDOS:**
 
-- [ ] 🔄 Análisis detallado de fallas en scraping actual
-- [ ] 🔧 Mejora de selectors CSS para mayor efectividad  
-- [ ] 🧪 Testing exhaustivo de anti-blocking mejorado
-- [ ] 📊 Implementar métricas de efectividad en tiempo real
+- [x] 🔄 Análisis detallado de fallas en scraping actual
+- [x] 🔧 Mejora de selectors CSS para mayor efectividad  
+- [x] 🧪 Testing exhaustivo de anti-blocking mejorado
+
 
 ---
 
@@ -189,18 +188,19 @@ La migración a API **no fue un fracaso** - fue una **investigación exitosa** q
 ## 🎯 CAMPOS DE DATOS OBJETIVO
 
 **Información que debemos extraer exitosamente:**
-- ✅ **Habitaciones:** `BEDROOMS`
-- ✅ **Baños:** `FULL_BATHROOMS` 
-- ✅ **Ambientes:** `ROOMS`
-- ✅ **Superficie cubierta:** `COVERED_AREA`
-- ✅ **Superficie total:** `TOTAL_AREA`
-- ✅ **Cocheras:** `PARKING_LOTS`
-- ✅ **Precio:** `price` + `currency_id`
-- ✅ **Ubicación:** `location` (completa)
-- ✅ **Tipo de propiedad:** `PROPERTY_TYPE`
-- ✅ **Operación:** `OPERATION` (venta/alquiler)
+- ✅ **Recámaras:** `recamaras`
+- ✅ **Baños:** `FULL_BATHROOMS` `
+- ✅ **Construcción:** `construccion`
+- ✅ **Superficie/Terreno:** `terreno`
+- ✅ **Estacionamientos/Espacios Parking:** `estacionamiento`
+-  **Precio:** `precio` + `moneda`
+-  **Ubicación/Dirección:** `direccion` (completa)
+-  **Tipo de propiedad:** `tipo_propiedad`
+-  **Operación:** `tipo_operacion` (venta/alquiler)
 
-**Meta de efectividad:** ✅ **100% ACHIEVED** (vs 36% anterior)
+- Es necesario agregar mas a futuro para que se alineen con todas las columnas del schema de la base de datos.
+
+**Meta de efectividad:** ✅ **100% ACHIEVED** (vs 36% anterior), faltan los campos sin "✅"
 
 ---
 
@@ -227,6 +227,9 @@ La migración a API **no fue un fracaso** - fue una **investigación exitosa** q
 - [x] ✅ **Extracción**: 5/5 campos por propiedad (100%)
 - [x] ✅ **Archivo**: `test_10_propiedades_hibrido_ultra_avanzado.py`
 
+### 4.4 Extraccion de campos objetivo 
+- [ ] Test de 10 propiedades reales de Morelos con todos los campos de datos objetivo extraidos exitosamente.
+
 **Archivos trabajados:**
 - `test_10_propiedades_hibrido_ultra_avanzado.py` - ✅ Script principal validado
 - `test_extraccion_dinamica.py` - ✅ Test de validación (eliminado post-validación)
@@ -248,6 +251,10 @@ La migración a API **no fue un fracaso** - fue una **investigación exitosa** q
 **Tiempo real invertido:** 2 horas (debugging + corrección + validación)
 
 ---
+
+## 🚀 VITAL QUE EL SCRAPER LOGRE EXTREAR LOS CAMPOS DE DATOS OBJETIVO
+
+- [ ] 🔧 Extrae con exito todos los campos de datos objetivo
 
 ## 🚀 PRÓXIMOS PASOS SUGERIDOS
 
@@ -321,6 +328,6 @@ La **investigación de API** no fue tiempo perdido - fue **research valioso** qu
 
 ## 🔄 SIGUIENTE PASO
 
-**INICIO INMEDIATO:** Fase 1.2 - Configuración de cuenta de desarrollador
+**INICIO INMEDIATO:** Lograr que scraper extraiga con 100% eficacia todos los campos de datos objetivo
 
 **Acción:** Crear cuenta en https://developers.mercadolibre.com.ar/ y obtener credenciales de aplicación. 
