@@ -11,6 +11,12 @@ venv/
 # Environment variables
 .env
 .env.local
+.env_tokens
+
+# OAuth tokens and sensitive data
+tokens/
+*.token
+auth_tokens.json
 
 # IDE files (keep local settings, don't upload to GitHub)
 .cursor/
@@ -20,6 +26,7 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Logs
 *.log
@@ -27,6 +34,22 @@ logs/
 
 # Data (uncomment next line if you DON'T want to upload collected data)
 # data/
+
+# Test results and temporary JSON files
+test_*_*.json
+*_20250609_*.json
+test_extractores_reales_*.json
+test_scraping_seguro_*.json
+
+# Specific obsolete scripts (by name to be safe)
+test_scraping_con_extractores_reales.py
+test_scraping_real_seguro.py
+test_scraper_con_proxies.py
+test_10_propiedades_morelos_optimizado.py
+analizar_estructura_html.py
+verify_exact_config.py
+scraper_ultra_avanzado_2025_con_proxies.py
+playwright_property_collector.py
 
 # Old experimental scripts (uncomment to hide from GitHub)
 property_collector_v1.py
