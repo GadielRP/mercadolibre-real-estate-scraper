@@ -457,25 +457,9 @@ class NavigatorStealth:
         except Exception as e:
             print(f"⚠️ Error manejando popups: {e}")
     
-    async def warm_up_navigation(self, page: Page) -> None:
-        """Calentamiento de navegación para parecer más humano"""
-        try:
-            print("🔥 Calentando navegación...")
-            
-            # Visitar entrada gradual
-            for entry_url in self.config.ENTRY_URLS:
-                success = await self.navigate_safely(page, entry_url)
-                if success:
-                    await self.handle_popup_and_cookies(page)
-                    await self.scroll_naturally(page)
-                    await self.human_delay('between_actions')
-                else:
-                    print(f"⚠️ Falló entrada a: {entry_url}")
-                    
-            print("✅ Calentamiento completado")
-            
-        except Exception as e:
-            print(f"❌ Error en calentamiento: {e}")
+    # FUNCIÓN ELIMINADA: warm_up_navigation
+    # Reemplazada por enhanced_session_warming (más optimizada)
+    # Ver línea 618 para la versión actual optimizada
     
     async def extract_property_urls_from_listing(self, page: Page, max_properties: int = 10) -> list:
         """Extrae URLs de propiedades desde página de listado"""
@@ -533,7 +517,7 @@ class NavigatorStealth:
     # ===== NUEVAS FUNCIONES PARA SCRAPING MASIVO =====
     
     async def rate_limit_control(self, request_count: int, session_start_time: float) -> None:
-        """Control de velocidad para evitar rate limiting"""
+        """Control de velocidad optimizado para evitar rate limiting"""
         try:
             import time
             
@@ -544,8 +528,8 @@ class NavigatorStealth:
             if elapsed_time > 0:
                 rpm_actual = (request_count * 60) / elapsed_time
                 
-                # Rate limit: máximo 8 requests por minuto (conservador)
-                max_rpm = 8
+                # Rate limit: máximo 10 requests por minuto (menos conservador)
+                max_rpm = 10  # Aumentado de 8 a 10
                 
                 if rpm_actual > max_rpm:
                     # Calcular delay necesario
@@ -555,14 +539,14 @@ class NavigatorStealth:
                         print(f"⏳ Rate limiting: esperando {target_delay:.1f}s (RPM actual: {rpm_actual:.1f})")
                         await asyncio.sleep(target_delay)
             
-            # Delay adicional aleatorio entre requests
-            extra_delay = random.uniform(2.0, 5.0)
+            # Delay reducido entre requests
+            extra_delay = random.uniform(1.0, 2.0)  # Reducido de 2-5s a 1-2s
             print(f"⏱️ Delay entre propiedades: {extra_delay:.1f}s")
             await asyncio.sleep(extra_delay)
             
         except Exception as e:
             print(f"⚠️ Error en rate limiting: {e}")
-            await asyncio.sleep(3.0)  # Fallback delay
+            await asyncio.sleep(1.5)  # Fallback delay reducido
     
     async def should_rotate_session(self, requests_in_session: int, session_duration: float) -> bool:
         """Determina si debe rotar la sesión actual"""
@@ -590,69 +574,46 @@ class NavigatorStealth:
             print(f"⚠️ Error verificando rotación: {e}")
             return False
     
-    async def circuit_breaker_check(self, consecutive_failures: int, total_requests: int) -> bool:
-        """Circuit breaker para proteger contra bloqueos"""
-        try:
-            # Tasa de fallo máxima permitida
-            max_failure_rate = 0.3  # 30%
-            max_consecutive_failures = 5
-            
-            if consecutive_failures >= max_consecutive_failures:
-                print(f"🚨 Circuit breaker: {consecutive_failures} fallos consecutivos")
-                cooldown = random.uniform(30, 60)  # Cooldown de 30-60 segundos
-                print(f"❄️ Cooldown de {cooldown:.1f}s antes de continuar...")
-                await asyncio.sleep(cooldown)
-                return True
-            
-            if total_requests > 10:
-                failure_rate = consecutive_failures / total_requests
-                if failure_rate > max_failure_rate:
-                    print(f"🚨 Circuit breaker: tasa de fallo {failure_rate:.1%} > {max_failure_rate:.1%}")
-                    return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"⚠️ Error en circuit breaker: {e}")
-            return False
+    # FUNCIÓN ELIMINADA: circuit_breaker_check
+    # Integrada en SessionStatsManager.handle_circuit_breaker() en session_stats.py
+    # Nueva función combina verificación + cooldown automático
     
     async def enhanced_session_warming(self, page: Page) -> bool:
-        """Calentamiento mejorado para scraping masivo"""
+        """Calentamiento optimizado para scraping masivo - RÁPIDO"""
         try:
-            print("🔥 Calentamiento mejorado para scraping masivo...")
+            print("🔥 Calentamiento optimizado para scraping masivo...")
             
-            # 1. Visita gradual con comportamiento humano
-            for i, entry_url in enumerate(self.config.ENTRY_URLS):
-                print(f"🌐 Entrada {i+1}/{len(self.config.ENTRY_URLS)}: {entry_url}")
+            # 1. Solo entrada gradual MÍNIMA (solo las 2 primeras URLs)
+            for i, entry_url in enumerate(self.config.ENTRY_URLS[:2]):  # Solo 2 URLs, no 3
+                print(f"🌐 Entrada {i+1}/2: {entry_url}")
                 
                 success = await self.navigate_safely(page, entry_url)
                 if not success:
                     print(f"⚠️ Falló entrada {i+1}")
                     continue
                     
-                # Comportamiento humano real
+                # Comportamiento humano MÍNIMO
                 await self.handle_popup_and_cookies(page)
-                await self.scroll_naturally(page)
+                # REMOVIDO: scroll_naturally - demasiado lento
                 
-                # Simular lectura/navegación
-                read_time = random.uniform(5, 15)
+                # Simular lectura REDUCIDA
+                read_time = random.uniform(2, 4)  # Reducido de 5-15s a 2-4s
                 print(f"📖 Simulando lectura por {read_time:.1f}s...")
                 await asyncio.sleep(read_time)
                 
-                # Delay entre páginas
-                await self.human_delay('between_actions')
+                # REMOVIDO: human_delay adicional
             
-            # 2. Verificar que el calentamiento funcionó
+            # 2. Verificación rápida
             page_health = await self.check_page_health(page)
             if page_health:
-                print("✅ Calentamiento mejorado exitoso")
+                print("✅ Calentamiento optimizado exitoso")
                 return True
             else:
                 print("❌ Calentamiento falló - página no saludable")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error en calentamiento mejorado: {e}")
+            print(f"❌ Error en calentamiento optimizado: {e}")
             return False
     
     async def detect_blocking_patterns(self, page: Page) -> Dict[str, bool]:
@@ -672,15 +633,15 @@ class NavigatorStealth:
             title_lower = page_title.lower()
             content_lower = page_content.lower()
             
-            # Detectar CAPTCHA
-            captcha_indicators = ['captcha', 'verificación', 'verificacion', 'robot', 'automated']
+            # Detectar CAPTCHA (más específico para evitar falsos positivos)
+            captcha_indicators = ['recaptcha', 'captcha challenge', 'verify you are human', 'robot verification']
             for indicator in captcha_indicators:
                 if indicator in title_lower or indicator in content_lower:
                     blocking_indicators['captcha'] = True
                     break
             
-            # Detectar rate limiting
-            rate_limit_indicators = ['too many requests', 'rate limit', 'slow down']
+            # Detectar rate limiting (más específico)
+            rate_limit_indicators = ['too many requests', 'rate limit exceeded', 'slow down your requests', 'temporarily blocked']
             for indicator in rate_limit_indicators:
                 if indicator in content_lower:
                     blocking_indicators['rate_limited'] = True
@@ -700,13 +661,20 @@ class NavigatorStealth:
                     blocking_indicators['robot_detected'] = True
                     break
             
-            # Log resultados
+            # Log resultados solo si hay bloqueos REALES
             blocks_detected = sum(blocking_indicators.values())
             if blocks_detected > 0:
                 print(f"🚨 Detectados {blocks_detected} indicadores de bloqueo:")
                 for block_type, detected in blocking_indicators.items():
                     if detected:
                         print(f"   ❌ {block_type}")
+                        
+                # Debug info para analizar falsos positivos
+                print(f"🔍 Debug - Título: {page_title[:100]}...")
+                print(f"🔍 Debug - URL actual: {page.url}")
+            else:
+                # Verificación silenciosa exitosa
+                print("✅ Verificación de bloqueos: página saludable")
             
             return blocking_indicators
             

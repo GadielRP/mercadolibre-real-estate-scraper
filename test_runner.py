@@ -82,11 +82,24 @@ class TestRunner:
                 'ejemplos': [r.get(campo) for r in valores_validos[:3]]
             }
         
-        # ✅ ESTADÍSTICAS JSON CATEGORÍAS
-        categorias_json = ['caracteristicas_principales', 'servicios', 'ambientes', 'seguridad', 'comodidades']
+        # ✅ ESTADÍSTICAS JSON CATEGORÍAS - DETECCIÓN DINÁMICA
+        # Detectar automáticamente todas las categorías que existen en los resultados
+        categorias_encontradas = set()
+        campos_excluidos = {'ml_id', 'titulo', 'descripcion', 'estado', 'ciudad', 'pais', 'direccion',
+                           'precio', 'moneda', 'tipo_propiedad', 'tipo_operacion', 'recamaras', 'banos', 
+                           'construccion', 'terreno', 'estacionamiento', 'andes_table_raw', 'tiempo_total',
+                           'url', 'property_number', 'status', 'timestamp', 'processing_time_seconds', 'error',
+                           'user_agent_usado', 'proxy_usado'}
+        
+        for resultado in resultados:
+            for key, value in resultado.items():
+                if (key not in campos_excluidos and 
+                    isinstance(value, dict) and 
+                    len(value) > 0):
+                    categorias_encontradas.add(key)
         
         stats_json = {}
-        for categoria in categorias_json:
+        for categoria in categorias_encontradas:
             categorias_con_datos = [r for r in resultados 
                                   if r.get(categoria) and isinstance(r.get(categoria), dict) and len(r.get(categoria)) > 0]
             
@@ -101,29 +114,31 @@ class TestRunner:
                 'ejemplo_campos': list(categorias_con_datos[0].get(categoria, {}).keys())[:5] if categorias_con_datos else []
             }
         
-        # ✅ ESTADÍSTICAS ANDES TABLE RAW
+        # ✅ ESTADÍSTICAS ANDES TABLE RAW - SOLO SI HAY DATOS
         propiedades_con_andes_raw = [r for r in resultados 
                                    if r.get('andes_table_raw') and isinstance(r.get('andes_table_raw'), dict)]
         
-        total_categorias_andes = sum(
-            r.get('andes_table_raw', {}).get('metadata', {}).get('total_categorias', 0) 
-            for r in propiedades_con_andes_raw
-        )
-        
-        total_campos_andes = sum(
-            r.get('andes_table_raw', {}).get('metadata', {}).get('total_campos', 0) 
-            for r in propiedades_con_andes_raw
-        )
-        
-        stats_andes_raw = {
-            'propiedades_con_datos': len(propiedades_con_andes_raw),
-            'total_propiedades': len(resultados),
-            'porcentaje_propiedades': (len(propiedades_con_andes_raw) / len(resultados) * 100) if resultados else 0,
-            'total_categorias': total_categorias_andes,
-            'total_campos': total_campos_andes,
-            'promedio_categorias_por_propiedad': (total_categorias_andes / len(propiedades_con_andes_raw)) if propiedades_con_andes_raw else 0,
-            'promedio_campos_por_propiedad': (total_campos_andes / len(propiedades_con_andes_raw)) if propiedades_con_andes_raw else 0
-        }
+        stats_andes_raw = None  # Solo generar si hay datos
+        if propiedades_con_andes_raw:
+            total_categorias_andes = sum(
+                r.get('andes_table_raw', {}).get('metadata', {}).get('total_categorias', 0) 
+                for r in propiedades_con_andes_raw
+            )
+            
+            total_campos_andes = sum(
+                r.get('andes_table_raw', {}).get('metadata', {}).get('total_campos', 0) 
+                for r in propiedades_con_andes_raw
+            )
+            
+            stats_andes_raw = {
+                'propiedades_con_datos': len(propiedades_con_andes_raw),
+                'total_propiedades': len(resultados),
+                'porcentaje_propiedades': (len(propiedades_con_andes_raw) / len(resultados) * 100) if resultados else 0,
+                'total_categorias': total_categorias_andes,
+                'total_campos': total_campos_andes,
+                'promedio_categorias_por_propiedad': (total_categorias_andes / len(propiedades_con_andes_raw)) if propiedades_con_andes_raw else 0,
+                'promedio_campos_por_propiedad': (total_campos_andes / len(propiedades_con_andes_raw)) if propiedades_con_andes_raw else 0
+            }
         
         # ✅ ESTADÍSTICAS GENERALES
         propiedades_exitosas = [r for r in resultados if r.get('status') != 'error']
@@ -139,6 +154,17 @@ class TestRunner:
         }
         
         # 🔄 COMPILAR REPORTE FINAL
+        estadisticas_completas = {
+            'generales': stats_generales,
+            'campos_universales_estructurados': stats_universales,
+            'metadatos_universales': stats_metadatos,
+            'categorias_json': stats_json
+        }
+        
+        # Solo agregar andes_table_raw si hay datos
+        if stats_andes_raw:
+            estadisticas_completas['andes_table_raw'] = stats_andes_raw
+        
         reporte_final = {
             'metadata_reporte': {
                 'version': '2025_hibrido_ultra_avanzado',
@@ -148,13 +174,7 @@ class TestRunner:
             },
             
             # 📊 ESTADÍSTICAS DETALLADAS
-            'estadisticas': {
-                'generales': stats_generales,
-                'campos_universales_estructurados': stats_universales,
-                'metadatos_universales': stats_metadatos,
-                'categorias_json': stats_json,
-                'andes_table_raw': stats_andes_raw
-            },
+            'estadisticas': estadisticas_completas,
             
             # 📋 DATOS COMPLETOS
             'resultados': resultados
@@ -210,22 +230,31 @@ class TestRunner:
             if stats['extraidos'] > 0:
                 print(f"   ✅ {campo}: {stats['extraidos']}/{stats['total']} ({stats['porcentaje']:.1f}%)")
         
-        # Categorías JSON
+        # Categorías JSON - DINÁMICAS
         json_stats = estadisticas['categorias_json']
-        categorias_exitosas = sum(1 for cat, stats in json_stats.items() if stats['propiedades_con_datos'] > 0)
-        print(f"\n📦 CATEGORÍAS JSON:")
-        print(f"   📊 Categorías con datos: {categorias_exitosas}/{len(json_stats)} ({categorias_exitosas/len(json_stats)*100:.1f}%)")
+        if json_stats:
+            categorias_exitosas = sum(1 for cat, stats in json_stats.items() if stats['propiedades_con_datos'] > 0)
+            total_categorias = len(json_stats)
+            print(f"\n📦 CATEGORÍAS JSON:")
+            print(f"   📊 Categorías con datos: {categorias_exitosas}/{total_categorias} ({categorias_exitosas/total_categorias*100:.1f}%)")
+            
+            for categoria, stats in json_stats.items():
+                if stats['propiedades_con_datos'] > 0:
+                    print(f"   ✅ {categoria}: {stats['propiedades_con_datos']} props ({stats['porcentaje_propiedades']:.1f}%), {stats['total_campos']} campos")
+        else:
+            print(f"\n📦 CATEGORÍAS JSON:")
+            print(f"   📊 No se encontraron categorías extraídas")
         
-        for categoria, stats in json_stats.items():
-            if stats['propiedades_con_datos'] > 0:
-                print(f"   ✅ {categoria}: {stats['propiedades_con_datos']} props ({stats['porcentaje_propiedades']:.1f}%), {stats['total_campos']} campos")
-        
-        # Andes RAW
-        andes = estadisticas['andes_table_raw']
-        print(f"\n🔄 ANDES TABLE RAW:")
-        print(f"   📊 Propiedades con datos: {andes['propiedades_con_datos']}/{andes['total_propiedades']} ({andes['porcentaje_propiedades']:.1f}%)")
-        print(f"   📋 Total categorías: {andes['total_categorias']}")
-        print(f"   🔢 Total campos: {andes['total_campos']}")
+        # Andes RAW - SOLO SI EXISTE
+        if 'andes_table_raw' in estadisticas:
+            andes = estadisticas['andes_table_raw']
+            print(f"\n🔄 ANDES TABLE RAW:")
+            print(f"   📊 Propiedades con datos: {andes['propiedades_con_datos']}/{andes['total_propiedades']} ({andes['porcentaje_propiedades']:.1f}%)")
+            print(f"   📋 Total categorías: {andes['total_categorias']}")
+            print(f"   🔢 Total campos: {andes['total_campos']}")
+        else:
+            print(f"\n🔄 ANDES TABLE RAW:")
+            print(f"   📊 No incluido (modo optimizado)")
         
         print("="*60)
     

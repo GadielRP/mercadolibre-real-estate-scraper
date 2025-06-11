@@ -76,12 +76,12 @@ class ConfiguracionHibridaUltraAvanzada:
         # {"width": 1440, "height": 900},   # ❌ REMOVIDO - problemático
     ]
     
-    # Delays humanos realistas
+    # Delays humanos optimizados para velocidad
     HUMAN_DELAYS = {
-        'page_load_wait': (3.0, 6.0),      # Reducido para testing rápido
-        'between_actions': (1.0, 2.0),     # Reducido
-        'scroll_pause': (0.5, 1.0),        # Reducido
-        'between_properties': (2.0, 4.0),  # Entre propiedades
+        'page_load_wait': (1.5, 3.0),      # Reducido de (3.0, 6.0)
+        'between_actions': (0.5, 1.0),     # Reducido de (1.0, 2.0)
+        'scroll_pause': (0.3, 0.6),        # Reducido de (0.5, 1.0)
+        'between_properties': (1.0, 2.0),  # Reducido de (2.0, 4.0)
     }
     
     # URLs de entrada graduales

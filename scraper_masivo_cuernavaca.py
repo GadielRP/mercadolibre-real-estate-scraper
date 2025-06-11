@@ -27,6 +27,7 @@ from models import ConfiguracionHibridaUltraAvanzada
 from navigation import NavigatorStealth
 from extractors import ExtractorHibridoOptimizado
 from test_runner import TestRunner
+from session_stats import SessionStatsManager
 
 
 class ScraperMasivoCuernavaca:
@@ -38,16 +39,8 @@ class ScraperMasivoCuernavaca:
         self.extractor = ExtractorHibridoOptimizado()
         self.test_runner = TestRunner()
         
-        # Estadísticas de sesión
-        self.session_stats = {
-            'total_processed': 0,
-            'successful_extractions': 0,
-            'failed_extractions': 0,
-            'consecutive_failures': 0,
-            'session_start_time': time.time(),
-            'requests_in_session': 0,
-            'blocking_detected': False
-        }
+        # Gestor de estadísticas centralizado 
+        self.session_manager = SessionStatsManager()
     
     async def scrape_cuernavaca_full_page(self, max_properties: int = 50) -> Dict:
         """
@@ -66,7 +59,7 @@ class ScraperMasivoCuernavaca:
         print("=" * 60)
         
         resultados_finales = []
-        urls_procesadas = set()
+        # Reason: urls_procesadas innecesario si urls_cuernavaca ya es unique
         
         try:
             async with async_playwright() as p:
@@ -90,35 +83,26 @@ class ScraperMasivoCuernavaca:
                     print(f"✅ {len(urls_cuernavaca)} URLs encontradas para procesar")
                     
                     # 3. PROCESAMIENTO MASIVO CON MEDIDAS ANTIBLOQUEO
+                    # Reason: Si urls_cuernavaca viene como set, la validación es innecesaria
                     for i, url in enumerate(urls_cuernavaca, 1):
-                        if url in urls_procesadas:
-                            print(f"⏭️ URL {i} ya procesada - saltando")
-                            continue
                             
                         print(f"\n🏠 PROPIEDAD {i}/{len(urls_cuernavaca)}")
                         print(f"URL: {url}")
                         print("-" * 50)
                         
-                        # Verificar circuit breaker
-                        should_break = await self.navigator.circuit_breaker_check(
-                            self.session_stats['consecutive_failures'],
-                            self.session_stats['total_processed']
-                        )
+                        # Circuit breaker con cooldown automático integrado
+                        await self.session_manager.handle_circuit_breaker()
                         
-                        if should_break:
-                            print("🚨 Circuit breaker activado - pausando")
-                            self.session_stats['consecutive_failures'] = 0  # Reset
-                        
-                        # Control de rate limiting
+                        # Control de rate limiting usando SessionStatsManager
                         await self.navigator.rate_limit_control(
-                            self.session_stats['requests_in_session'],
-                            self.session_stats['session_start_time']
+                            self.session_manager.stats.requests_in_session,
+                            self.session_manager.stats.session_start_time
                         )
                         
                         # Verificar si necesita rotación de sesión
-                        session_duration = time.time() - self.session_stats['session_start_time']
+                        session_duration = self.session_manager.get_session_duration()
                         should_rotate = await self.navigator.should_rotate_session(
-                            self.session_stats['requests_in_session'],
+                            self.session_manager.stats.requests_in_session,
                             session_duration
                         )
                         
@@ -126,21 +110,22 @@ class ScraperMasivoCuernavaca:
                             print("🔄 Rotando sesión...")
                             await context.close()
                             context, page = await self._setup_session(browser)
-                            self._reset_session_stats()
+                            self.session_manager.reset_session()
                         
                         # Procesar propiedad individual
                         resultado = await self._process_single_property(page, url, i)
                         resultados_finales.append(resultado)
-                        urls_procesadas.add(url)
                         
-                        # Actualizar estadísticas
-                        self._update_session_stats(resultado)
+                        # Actualizar estadísticas usando SessionStatsManager
+                        self.session_manager.update_from_result(resultado)
                         
-                        # Detectar bloqueos
-                        blocking_detected = await self.navigator.detect_blocking_patterns(page)
-                        if any(blocking_detected.values()):
-                            print("🚨 Patrones de bloqueo detectados - activando medidas defensivas")
-                            await asyncio.sleep(random.uniform(10, 30))
+                        # Detectar bloqueos (solo si hay errores previos)
+                        if resultado.get('status') != 'exitoso':
+                            blocking_detected = await self.navigator.detect_blocking_patterns(page)
+                            if any(blocking_detected.values()):
+                                print("🚨 Patrones de bloqueo detectados - activando medidas defensivas")
+                                await asyncio.sleep(random.uniform(10, 30))
+                        # Si extracción fue exitosa, no necesitamos verificar bloqueos
                         
                         # Progreso
                         self._show_progress(i, len(urls_cuernavaca))
@@ -275,13 +260,11 @@ class ScraperMasivoCuernavaca:
                 incluir_andes_raw=False  # Optimización para velocidad
             )
             
-            # Agregar metadatos
-            datos_extraidos.update({
-                'url': url,
-                'property_number': property_number,
-                'status': 'exitoso',
-                'timestamp': resultado['timestamp']
-            })
+            # Agregar metadatos evitando conflictos de keys
+            datos_extraidos['url'] = url
+            datos_extraidos['property_number'] = property_number
+            datos_extraidos['status'] = 'exitoso'
+            datos_extraidos['timestamp'] = resultado['timestamp']
             
             resultado.update(datos_extraidos)
             
@@ -297,32 +280,17 @@ class ScraperMasivoCuernavaca:
         
         return resultado
     
-    def _update_session_stats(self, resultado: Dict) -> None:
-        """Actualiza estadísticas de sesión"""
-        self.session_stats['total_processed'] += 1
-        self.session_stats['requests_in_session'] += 1
-        
-        if resultado['status'] == 'exitoso':
-            self.session_stats['successful_extractions'] += 1
-            self.session_stats['consecutive_failures'] = 0  # Reset failures
-        else:
-            self.session_stats['failed_extractions'] += 1
-            self.session_stats['consecutive_failures'] += 1
-    
-    def _reset_session_stats(self) -> None:
-        """Resetea estadísticas de sesión para nueva sesión"""
-        self.session_stats['session_start_time'] = time.time()
-        self.session_stats['requests_in_session'] = 0
+    # Funciones de estadísticas refactorizadas a SessionStatsManager
+    # Ver session_stats.py para la implementación centralizada
     
     def _show_progress(self, current: int, total: int) -> None:
-        """Muestra progreso del scraping"""
-        percentage = (current / total) * 100
-        success_rate = (self.session_stats['successful_extractions'] / self.session_stats['total_processed'] * 100) if self.session_stats['total_processed'] > 0 else 0
+        """Muestra progreso del scraping usando SessionStatsManager"""
+        progress_data = self.session_manager.get_progress_summary(current, total)
         
-        print(f"\n📊 PROGRESO: {current}/{total} ({percentage:.1f}%)")
-        print(f"✅ Exitosas: {self.session_stats['successful_extractions']}")
-        print(f"❌ Falladas: {self.session_stats['failed_extractions']}")
-        print(f"📈 Tasa éxito: {success_rate:.1f}%")
+        print(f"\n📊 PROGRESO: {current}/{total} ({progress_data['percentage']:.1f}%)")
+        print(f"✅ Exitosas: {progress_data['successful']}")
+        print(f"❌ Falladas: {progress_data['failed']}")
+        print(f"📈 Tasa éxito: {progress_data['success_rate']:.1f}%")
     
     async def _generate_final_report(self, resultados: List[Dict], status: str) -> Dict:
         """Genera reporte final del scraping masivo"""
@@ -337,18 +305,10 @@ class ScraperMasivoCuernavaca:
         # Usar test_runner para generar reporte completo
         reporte = self.test_runner.generar_reporte_hibrido(resultados, filename)
         
-        # Estadísticas adicionales del scraping masivo
-        total_time = time.time() - self.session_stats['session_start_time']
-        
-        reporte['scraping_masivo_stats'] = {
-            'duracion_total_minutos': round(total_time / 60, 2),
-            'propiedades_objetivo': len(resultados),
-            'propiedades_exitosas': self.session_stats['successful_extractions'],
-            'propiedades_fallidas': self.session_stats['failed_extractions'],
-            'tasa_exito_final': round(self.session_stats['successful_extractions'] / len(resultados) * 100, 2) if resultados else 0,
-            'promedio_tiempo_por_propiedad': round(total_time / len(resultados), 2) if resultados else 0,
-            'status_final': status
-        }
+        # Estadísticas adicionales usando SessionStatsManager
+        stats_data = self.session_manager.get_final_report_data(len(resultados))
+        stats_data['status_final'] = status
+        reporte['scraping_masivo_stats'] = stats_data
         
         print(f"✅ Reporte guardado: {filename}")
         return reporte

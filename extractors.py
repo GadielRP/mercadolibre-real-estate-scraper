@@ -4,7 +4,7 @@ EXTRACTORES DE DATOS - SCRAPER MERCADOLIBRE
 ==========================================
 
 Lógica de extracción híbrida de datos de propiedades.
-Solo funciones realmente usadas, modularizado para <500 líneas.
+Refactorizado con funciones utilitarias modulares.
 """
 
 import re
@@ -12,6 +12,10 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Optional
 from playwright.async_api import Page
+
+# Importar funciones utilitarias refactorizadas
+from utils import parse_numeric
+from direccion_utils import es_probable_direccion, parsear_ubicacion_completa
 
 
 class ExtractorHibridoOptimizado:
@@ -181,67 +185,6 @@ class ExtractorHibridoOptimizado:
         
         return andes_data
 
-    async def extraer_datos_desde_tabla_andes(self, page) -> dict:
-        """Extrae datos estructurados desde tabla andes"""
-        
-        datos = {
-            'recamaras': None,
-            'banos': None,
-            'construccion': None,
-            'terreno': None,
-            'estacionamiento': None,
-            'precio': None,
-            'moneda': None,
-            'direccion': None,
-            'tipo_propiedad': None,
-            'tipo_operacion': None
-        }
-        
-        try:
-            andes_tables = await page.query_selector_all('.andes-table')
-            
-            if not andes_tables:
-                return datos
-            
-            await self._extraer_precio_y_moneda(page, datos)
-            await self._extraer_tipo_propiedad_y_operacion(page, datos)
-            await self._extraer_direccion(page, datos)
-            
-            for table in andes_tables:
-                rows = await table.query_selector_all('tr')
-                
-                for row in rows:
-                    try:
-                        cells = await row.query_selector_all('td, th')
-                        
-                        if len(cells) >= 2:
-                            key = (await cells[0].text_content()).strip().lower()
-                            value = (await cells[1].text_content()).strip()
-                            
-                            if 'recámara' in key or 'recamara' in key:
-                                if datos['recamaras'] is None:
-                                    datos['recamaras'] = self._parse_number(value)
-                            elif 'baño' in key or 'bano' in key:
-                                if datos['banos'] is None:
-                                    datos['banos'] = self._parse_float(value)
-                            elif 'superficie construida' in key or 'construida' in key:
-                                if datos['construccion'] is None:
-                                    datos['construccion'] = self._parse_number(value)
-                            elif 'superficie total' in key:
-                                if datos['terreno'] is None:
-                                    datos['terreno'] = self._parse_number(value)
-                            elif 'estacionamiento' in key or 'garage' in key:
-                                if datos['estacionamiento'] is None:
-                                    datos['estacionamiento'] = self._parse_number(value)
-                    except:
-                        continue
-            
-            return datos
-            
-        except Exception as e:
-            print(f"❌ Error extrayendo tabla andes: {e}")
-            return datos
-
     async def extraer_datos_hibrido(self, page, descripcion_respaldo: str = None, navigator=None, incluir_andes_raw=True) -> dict:
         """
         Extracción híbrida completa con bypass integrado
@@ -263,55 +206,85 @@ class ExtractorHibridoOptimizado:
             print("📋 Extrayendo metadatos universales...")
             await self._extraer_metadatos_universales(page, datos)
             
-            # ✅ 2. CAMPOS ESTRUCTURADOS
+            # ✅ 2. CAMPOS ESTRUCTURADOS BÁSICOS
             print("🔢 Extrayendo campos estructurados...")
             await self._extraer_precio_y_moneda(page, datos)
-            await self._extraer_tipo_propiedad_y_operacion(page, datos) 
+            await self._extraer_tipo_propiedad_y_operacion(page, datos)
             await self._extraer_direccion(page, datos)
-            
-            # Extraer campos de tabla básica
-            datos_tabla = await self.extraer_datos_desde_tabla_andes(page)
-            datos.update(datos_tabla)
             
             # Parsear ubicación completa
             if datos.get('direccion'):
-                ubicacion = await self._parsear_ubicacion_completa(datos['direccion'])
+                ubicacion = parsear_ubicacion_completa(datos['direccion'])
                 datos.update(ubicacion)
             
             # ✅ 3. EXTRACCIÓN DE CATEGORÍAS DINÁMICAS 
             print("📦 Extrayendo categorías dinámicas...")
             
-            # USAR SIEMPRE la función que funciona perfectamente
-            andes_raw = await self.extraer_andes_table_completa_json(page, navigator)
+            if incluir_andes_raw:
+                # Modo completo: extraer todo el raw data (más lento)
+                print("   🔄 Modo completo: extrayendo andes_table_raw completo...")
+                andes_raw = await self.extraer_andes_table_completa_json(page, navigator)
+                categorias_json = await self._organizar_categorias_json_optimizado(andes_raw.get('categorias', {}))
+                datos['andes_table_raw'] = andes_raw if andes_raw.get('categorias') else None
+                print(f"   📋 andes_table_raw incluido para respaldo completo")
+            else:
+                # Modo optimizado: solo categorías estructuradas (más rápido)
+                print("   ⚡ Modo optimizado: extrayendo solo categorías necesarias...")
+                categorias_raw = await self._extraer_categorias_optimizado(page, navigator)
+                categorias_json = await self._organizar_categorias_json_optimizado(categorias_raw)
+                print(f"   ⚡ andes_table_raw omitido para optimización de velocidad")
             
-            # Organizar JSON dinámico (SIEMPRE)
-            categorias_json = await self._organizar_datos_json_por_categoria(andes_raw)
-            
-            # ✅ AGREGAR TODAS las categorías dinámicas que se encontraron (SIEMPRE)
+            # ✅ AGREGAR TODAS las categorías dinámicas que se encontraron
             if categorias_json:
                 for categoria_nombre, categoria_datos in categorias_json.items():
                     if categoria_datos and len(categoria_datos) > 0:
                         datos[categoria_nombre] = categoria_datos
                         print(f"   📦 Categoría añadida: '{categoria_nombre}' con {len(categoria_datos)} campos")
             
-            # ✅ CONDICIONAL: Solo guardar andes_table_raw si se solicita
-            if incluir_andes_raw:
-                datos['andes_table_raw'] = andes_raw if andes_raw.get('categorias') else None
-                print(f"   📋 andes_table_raw incluido para respaldo completo")
-            else:
-                print(f"   ⚡ andes_table_raw omitido para optimización de velocidad")
+            # ✅ 4. EXTRAER CAMPOS BÁSICOS ESTRUCTURADOS desde categorías principales
+            # IMPORTANTE: Los agregamos justo después de las categorías para mejor organización
+            print("🔢 Extrayendo campos básicos desde categorías...")
+            await self._extraer_campos_basicos_desde_categorias(datos)
             
-            # ✅ 4. TIEMPO Y ESTADÍSTICAS
+            # ✅ 5. REORGANIZAR DATOS: Mover campos básicos al inicio para mejor legibilidad
+            datos_reorganizados = {}
+            
+            # Primero: Metadatos universales
+            campos_metadatos = ['ml_id', 'titulo', 'descripcion', 'direccion', 'pais', 'estado', 'ciudad']
+            for campo in campos_metadatos:
+                if campo in datos:
+                    datos_reorganizados[campo] = datos[campo]
+            
+            # Segundo: Campos estructurados básicos
+            campos_estructurados = ['precio', 'tipo_propiedad', 'tipo_operacion', 'recamaras', 'banos', 'construccion', 'terreno', 'estacionamiento', 'moneda']
+            for campo in campos_estructurados:
+                if campo in datos:
+                    datos_reorganizados[campo] = datos[campo]
+            
+            # Tercero: Categorías dinámicas (principales, servicios, ambientes, etc.)
+            for key, value in datos.items():
+                if key not in campos_metadatos and key not in campos_estructurados and key not in ['tiempo_total', 'andes_table_raw']:
+                    datos_reorganizados[key] = value
+            
+            # Cuarto: andes_table_raw (si existe)
+            if 'andes_table_raw' in datos:
+                datos_reorganizados['andes_table_raw'] = datos['andes_table_raw']
+            
+            # Finalmente: metadatos del sistema
+            if 'tiempo_total' in datos:
+                datos_reorganizados['tiempo_total'] = datos['tiempo_total']
+            
+            # ✅ 6. TIEMPO Y ESTADÍSTICAS
             tiempo_total = (datetime.now() - inicio_tiempo).total_seconds()
-            datos['tiempo_total'] = tiempo_total
+            datos_reorganizados['tiempo_total'] = tiempo_total
             
             modo = "completo" if incluir_andes_raw else "optimizado"
-            total_campos = len([k for k, v in datos.items() if v is not None and v != ""])
+            total_campos = len([k for k, v in datos_reorganizados.items() if v is not None and v != ""])
             
             print(f"⚡ Extracción híbrida {modo} completada en {tiempo_total:.1f}s")
             print(f"📊 Campos extraídos: {total_campos}")
             
-            return datos
+            return datos_reorganizados
             
         except Exception as e:
             print(f"❌ Error en extracción híbrida: {e}")
@@ -322,37 +295,7 @@ class ExtractorHibridoOptimizado:
                 'status': 'error'
             }
 
-    def _parse_number(self, value: str) -> Optional[int]:
-        """Parsea número entero"""
-        if not value:
-            return None
-        try:
-            clean_value = re.sub(r'[^\d,.]', '', value)
-            if clean_value:
-                if ',' in clean_value and '.' not in clean_value:
-                    clean_value = clean_value.replace(',', '.')
-                elif ',' in clean_value and '.' in clean_value:
-                    clean_value = clean_value.replace(',', '')
-                return int(float(clean_value))
-        except:
-            pass
-        return None
-    
-    def _parse_float(self, value: str) -> Optional[float]:
-        """Parsea número flotante"""
-        if not value:
-            return None
-        try:
-            clean_value = re.sub(r'[^\d,.]', '', value)
-            if clean_value:
-                if ',' in clean_value and '.' not in clean_value:
-                    clean_value = clean_value.replace(',', '.')
-                elif ',' in clean_value and '.' in clean_value:
-                    clean_value = clean_value.replace(',', '')
-                return float(clean_value)
-        except:
-            pass
-        return None
+    # Funciones numéricas movidas a utils.py
 
     async def _extraer_precio_y_moneda(self, page, datos):
         """Extrae precio y moneda"""
@@ -419,7 +362,7 @@ class ExtractorHibridoOptimizado:
                 
                 for address_element in address_elements:
                     address_text = await address_element.text_content()
-                    if address_text and self._es_probable_direccion(address_text.strip()):
+                    if address_text and es_probable_direccion(address_text.strip()):
                         datos['direccion'] = address_text.strip()
                         print(f"  📍 Dirección encontrada (E1): {datos['direccion']}")
                         return
@@ -444,7 +387,7 @@ class ExtractorHibridoOptimizado:
                     
                     for element in elements:
                         text = await element.text_content()
-                        if text and self._es_probable_direccion(text.strip()):
+                        if text and es_probable_direccion(text.strip()):
                             datos['direccion'] = text.strip()
                             print(f"  📍 Dirección encontrada (E2): {datos['direccion']}")
                             return
@@ -463,7 +406,7 @@ class ExtractorHibridoOptimizado:
                     
                     for line in lines:
                         line_clean = line.strip()
-                        if self._es_probable_direccion(line_clean):
+                        if es_probable_direccion(line_clean):
                             datos['direccion'] = line_clean
                             print(f"  📍 Dirección encontrada (E3): {datos['direccion']}")
                             return
@@ -476,62 +419,7 @@ class ExtractorHibridoOptimizado:
         except Exception as e:
             print(f"⚠️ Error extrayendo dirección: {e}")
 
-    def _es_probable_direccion(self, text: str) -> bool:
-        """Determina si un texto es probablemente una dirección"""
-        if not text or len(text.strip()) < 15:
-            return False
-            
-        text_lower = text.lower().strip()
-        
-        # ❌ FILTROS ESTRICTOS - No debe contener:
-        filtros_prohibidos = [
-            'mercado libre', 'mercadolibre', 'ml', 'mlm-', 'contraseña', 'pin', 
-            'whatsapp', 'email', 'características', 'publicación', 'precio', 'venta', 
-            'compra', 'casa', 'inmueble', 'metros cuadrados', 'm²', 'm2', 'recámara', 
-            'baño', 'estacionamiento', 'terreno', 'construcción', 'superficie', 'pisos'
-        ]
-        
-        if any(filtro in text_lower for filtro in filtros_prohibidos):
-            return False
-        
-        # ❌ No aceptar textos que son principalmente números
-        if len([c for c in text if c.isdigit()]) > len(text) * 0.5:
-            return False
-            
-        # ❌ No aceptar textos muy cortos sin estructura
-        if len(text.split()) < 3:
-            return False
-        
-        # ✅ INDICADORES POSITIVOS de vías
-        indicadores_via = [
-            'colonia', 'col.', 'calle', 'c.', 'avenida', 'av.', 'privada', 'priv.',
-            'boulevard', 'blvd', 'fraccionamiento', 'fracc', 'calzada', 'calz.',
-            'andador', 'circuito', 'paseo', 'plaza', 'glorieta'
-        ]
-        
-        # ✅ INDICADORES DE UBICACIÓN
-        indicadores_ubicacion = [
-            'cuernavaca', 'morelos', 'cdmx', 'ciudad de méxico', 'méxico', 'estado de méxico',
-            'nezahualcóyotl', 'nezahualcoyotl', 'tecámac', 'tecamac', 'atizapán', 'atizapan',
-            'coyoacán', 'coyoacan', 'zapopan', 'guadalajara', 'mérida', 'merida', 'yucatán',
-            'metropolitana', 'villa del real', 'mayorazgos', 'distrito federal', 'alvaro obregón'
-        ]
-        
-        # Debe tener AL MENOS un indicador de vía O ubicación
-        tiene_indicador_via = any(indicador in text_lower for indicador in indicadores_via)
-        tiene_ubicacion = any(ubicacion in text_lower for ubicacion in indicadores_ubicacion)
-        
-        # ✅ ESTRUCTURA de dirección (flexible)
-        tiene_estructura = (
-            (',' in text and len(text.split(',')) >= 2) or  # Separadores de dirección
-            any(char.isdigit() for char in text) or  # Algún número
-            'minutos' in text_lower  # Referencias de distancia
-        )
-        
-        # ✅ DECISIÓN FINAL: Debe cumplir criterios básicos
-        es_direccion = (tiene_indicador_via or tiene_ubicacion) and tiene_estructura
-        
-        return es_direccion
+    # Funciones de dirección movidas a direccion_utils.py
 
     async def _extraer_metadatos_universales(self, page, datos):
         """Extrae metadatos universales"""
@@ -561,124 +449,7 @@ class ExtractorHibridoOptimizado:
         except Exception as e:
             print(f"❌ Error extrayendo metadatos: {e}")
 
-    async def _parsear_ubicacion_completa(self, direccion_raw: str) -> dict:
-        """Parsea dirección en componentes - ENFOQUE SIMPLE por últimos elementos"""
-        ubicacion = {
-            'pais': 'México',
-            'estado': None,
-            'ciudad': None
-        }
-        
-        if not direccion_raw:
-            return ubicacion
-            
-        try:
-            print(f"   🔍 Parseando ubicación: '{direccion_raw}'")
-            
-            # ✅ LIMPIEZA PREVIA del string
-            direccion_limpia = direccion_raw.strip()
-            
-            # Remover caracteres extraños y normalizar
-            direccion_limpia = direccion_limpia.replace('  ', ' ')  # Espacios dobles
-            direccion_limpia = direccion_limpia.replace(' ,', ',')  # Espacios antes de comas
-            direccion_limpia = direccion_limpia.replace(', ', ',')  # Normalizar separadores
-            
-            # ✅ SEPARAR POR COMAS
-            partes = [parte.strip() for parte in direccion_limpia.split(',') if parte.strip()]
-            
-            if len(partes) >= 2:
-                # ✅ ENFOQUE SIMPLE: Últimos dos elementos
-                estado_raw = partes[-1].strip()  # Último elemento = estado
-                ciudad_raw = partes[-2].strip()  # Penúltimo elemento = ciudad
-                
-                # ✅ MAPEO SIMPLE DE ESTADOS (solo normalización)
-                estado_normalizado = self._normalizar_estado(estado_raw)
-                
-                # ✅ ASIGNAR RESULTADOS
-                ubicacion['estado'] = estado_normalizado
-                ubicacion['ciudad'] = ciudad_raw.title()  # Capitalizar primera letra
-                
-                print(f"     ✅ Estado: {ubicacion['estado']}")
-                print(f"     ✅ Ciudad: {ubicacion['ciudad']}")
-                
-            elif len(partes) == 1:
-                # Solo un elemento - probablemente sea estado
-                estado_raw = partes[0].strip()
-                estado_normalizado = self._normalizar_estado(estado_raw)
-                ubicacion['estado'] = estado_normalizado
-                print(f"     ✅ Solo estado: {ubicacion['estado']}")
-            else:
-                print(f"     ⚠️ No se pudieron extraer elementos válidos")
-                    
-        except Exception as e:
-            print(f"❌ Error parseando ubicación: {e}")
-            
-        return ubicacion
-
-    def _normalizar_estado(self, estado_raw: str) -> str:
-        """Normaliza nombre de estado con mapeo simple"""
-        estado_lower = estado_raw.lower().strip()
-        
-        # ✅ MAPEO SIMPLE solo para casos comunes
-        normalizaciones = {
-            'distrito federal': 'Ciudad de México',
-            'df': 'Ciudad de México',
-            'cdmx': 'Ciudad de México',
-            'ciudad de méxico': 'Ciudad de México',
-            'estado de méxico': 'Estado de México',
-            'mexico': 'Estado de México',
-            'edomex': 'Estado de México',
-            'morelos': 'Morelos',
-            'estado de morelos': 'Morelos',
-            'yucatan': 'Yucatán',
-            'yucatán': 'Yucatán',
-            'queretaro': 'Querétaro',
-            'querétaro': 'Querétaro',
-            'jalisco': 'Jalisco',
-            'sinaloa': 'Sinaloa'
-        }
-        
-        return normalizaciones.get(estado_lower, estado_raw.title())
-
-    async def _organizar_datos_json_por_categoria(self, andes_raw: dict) -> dict:
-        """Organiza datos JSON de forma COMPLETAMENTE DINÁMICA basado en lo que realmente encuentre"""
-        categorias_dinamicas = {}
-        
-        try:
-            if not andes_raw or 'categorias' not in andes_raw:
-                print("⚠️ No hay datos andes_raw para organizar")
-                return categorias_dinamicas
-            
-            print(f"📦 Organizando {len(andes_raw['categorias'])} categorías encontradas...")
-            
-            # ✅ MÉTODO DINÁMICO: Usar exactamente las categorías que encuentre
-            for categoria_nombre, categoria_data in andes_raw['categorias'].items():
-                if isinstance(categoria_data, dict) and len(categoria_data) > 0:
-                    
-                    # Normalizar nombre de categoría para JSON
-                    categoria_limpia = categoria_nombre.lower().strip()
-                    categoria_limpia = categoria_limpia.replace(' ', '_').replace('ñ', 'n').replace(':', '').replace('-', '_')
-                    
-                    # Asegurar que no esté vacía
-                    if not categoria_limpia or categoria_limpia in ['categoria_1', 'categoria_2']:
-                        categoria_limpia = f"categoria_{len(categorias_dinamicas) + 1}"
-                    
-                    # Guardar EXACTAMENTE lo que encuentre
-                    categorias_dinamicas[categoria_limpia] = categoria_data.copy()
-                    
-                    print(f"   ✅ Categoría '{categoria_limpia}': {len(categoria_data)} campos")
-                    
-                    # Mostrar algunos ejemplos de campos
-                    ejemplos = list(categoria_data.keys())[:3]
-                    print(f"      📋 Ejemplos: {ejemplos}")
-            
-            print(f"✅ Total categorías dinámicas creadas: {len(categorias_dinamicas)}")
-            
-            return categorias_dinamicas
-            
-        except Exception as e:
-            print(f"❌ Error organizando categorías dinámicas: {e}")
-            return categorias_dinamicas
+    # Funciones _parsear_ubicacion_completa y _normalizar_estado movidas a direccion_utils.py
 
     async def _expand_characteristics_fallback(self, page) -> bool:
         """Método fallback para expandir características cuando no hay NavigatorStealth"""
@@ -732,67 +503,6 @@ class ExtractorHibridoOptimizado:
             print(f"❌ Error en método fallback: {e}")
             return False
 
-    async def _extraer_categorias_estructuradas(self, page) -> dict:
-        """Extrae categorías estructuradas sin el andes_table_raw completo"""
-        categorias = {}
-        
-        try:
-            # Buscar tablas de categorías
-            tablas = await page.query_selector_all('.ui-vpp-striped-specs__table')
-            
-            if not tablas:
-                print("   ⚠️ No se encontraron tablas de categorías")
-                return categorias
-            
-            print(f"   🔍 Procesando {len(tablas)} tablas encontradas...")
-            
-            for i, tabla in enumerate(tablas):
-                categoria_nombre = f"categoria_{i+1}"
-                categoria_datos = {}
-                
-                try:
-                    # Buscar título de categoría
-                    titulo_element = await tabla.query_selector('h3, h4')
-                    if titulo_element:
-                        titulo_text = await titulo_element.text_content()
-                        if titulo_text and titulo_text.strip():
-                            categoria_nombre = titulo_text.strip().lower()
-                    
-                    # Extraer filas de datos
-                    filas = await tabla.query_selector_all('tr')
-                    
-                    for fila in filas:
-                        # Extraer campo (th > div)
-                        campo_element = await fila.query_selector('th div')
-                        if campo_element:
-                            campo_text = await campo_element.text_content()
-                            
-                            # Extraer valor (td > span)
-                            valor_element = await fila.query_selector('td span')
-                            if valor_element:
-                                valor_text = await valor_element.text_content()
-                                
-                                if campo_text and valor_text:
-                                    campo_limpio = campo_text.strip()
-                                    valor_limpio = valor_text.strip()
-                                    
-                                    if campo_limpio and valor_limpio:
-                                        categoria_datos[campo_limpio] = valor_limpio
-                    
-                    if categoria_datos:
-                        categorias[categoria_nombre] = categoria_datos
-                        print(f"   ✅ Categoría '{categoria_nombre}': {len(categoria_datos)} campos")
-                    
-                except Exception as e:
-                    print(f"   ⚠️ Error procesando tabla {i}: {e}")
-                    continue
-            
-            return categorias
-            
-        except Exception as e:
-            print(f"❌ Error extrayendo categorías estructuradas: {e}")
-            return categorias
-
     async def _organizar_categorias_json_optimizado(self, categorias_raw: dict) -> dict:
         """Organiza categorías en formato JSON optimizado"""
         categorias_finales = {}
@@ -839,4 +549,146 @@ class ExtractorHibridoOptimizado:
             
         except Exception as e:
             print(f"❌ Error organizando categorías: {e}")
-            return False 
+            return False
+
+    async def _extraer_campos_basicos_desde_categorias(self, datos):
+        """Extrae campos básicos estructurados desde categorías principales"""
+        try:
+            # Inicializar campos básicos si no existen
+            if 'recamaras' not in datos:
+                datos['recamaras'] = None
+            if 'banos' not in datos:
+                datos['banos'] = None
+            if 'construccion' not in datos:
+                datos['construccion'] = None
+            if 'terreno' not in datos:
+                datos['terreno'] = None
+            if 'estacionamiento' not in datos:
+                datos['estacionamiento'] = None
+            if 'moneda' not in datos:
+                datos['moneda'] = 'MXN'  # Default para México
+            
+            # Buscar campos en categoría 'principales'
+            if 'principales' in datos and isinstance(datos['principales'], dict):
+                principales = datos['principales']
+                
+                # Recámaras
+                for key, value in principales.items():
+                    key_lower = key.lower()
+                    if 'recámara' in key_lower or 'recamara' in key_lower:
+                        datos['recamaras'] = parse_numeric(value)
+                        print(f"   ✅ Recámaras encontradas: {datos['recamaras']}")
+                        break
+                
+                # Baños
+                for key, value in principales.items():
+                    key_lower = key.lower()
+                    if 'baño' in key_lower or 'bano' in key_lower:
+                        datos['banos'] = parse_numeric(value)
+                        print(f"   ✅ Baños encontrados: {datos['banos']}")
+                        break
+                
+                # Superficie construida
+                for key, value in principales.items():
+                    key_lower = key.lower()
+                    if 'superficie construida' in key_lower or 'construida' in key_lower:
+                        datos['construccion'] = parse_numeric(value)
+                        print(f"   ✅ Construcción encontrada: {datos['construccion']} m²")
+                        break
+                
+                # Superficie total/terreno
+                for key, value in principales.items():
+                    key_lower = key.lower()
+                    if 'superficie total' in key_lower or 'terreno' in key_lower:
+                        datos['terreno'] = parse_numeric(value)
+                        print(f"   ✅ Terreno encontrado: {datos['terreno']} m²")
+                        break
+                
+                # Estacionamiento
+                for key, value in principales.items():
+                    key_lower = key.lower()
+                    if 'estacionamiento' in key_lower or 'garage' in key_lower or 'cochera' in key_lower:
+                        datos['estacionamiento'] = parse_numeric(value)
+                        print(f"   ✅ Estacionamiento encontrado: {datos['estacionamiento']}")
+                        break
+            
+            # Si no hay precio pero hay moneda, eliminar moneda
+            if not datos.get('precio') and datos.get('moneda'):
+                datos['moneda'] = None
+                
+        except Exception as e:
+            print(f"⚠️ Error extrayendo campos básicos: {e}")
+
+    async def _extraer_categorias_optimizado(self, page, navigator=None) -> dict:
+        """Extrae SOLO categorías de forma optimizada sin metadatos completos"""
+        try:
+            print("   🚀 Extracción ultra-ligera de categorías...")
+            
+            # Expansión rápida
+            if navigator and hasattr(navigator, 'click_expand_characteristics_button'):
+                await navigator.click_expand_characteristics_button(page)
+            else:
+                await self._expand_characteristics_fallback(page)
+            
+            await page.wait_for_timeout(500)  # Reducido de 1000ms
+            
+            # Buscar contenedor principal
+            main_container = await page.query_selector('.ui-pdp-container__row.ui-pdp-container__row--technical-specifications')
+            if not main_container:
+                return {}
+            
+            # Extraer solo categorías sin metadatos
+            category_tables = await main_container.query_selector_all('.ui-vpp-striped-specs__table')
+            if not category_tables:
+                return {}
+            
+            categorias = {}
+            
+            for i, tabla in enumerate(category_tables):
+                try:
+                    # Nombre de categoría simplificado
+                    categoria_nombre = f"categoria_{i+1}"
+                    
+                    # Buscar título rápido
+                    for selector in ['h3', 'h4', '.ui-vpp-striped-specs__header']:
+                        titulo_element = await tabla.query_selector(selector)
+                        if titulo_element:
+                            titulo_text = await titulo_element.text_content()
+                            if titulo_text and len(titulo_text.strip()) > 0:
+                                categoria_nombre = titulo_text.strip().lower().replace(' ', '_').replace('ñ', 'n').replace(':', '').replace('-', '_')
+                                break
+                    
+                    # Extraer datos de filas (simplificado)
+                    categoria_data = {}
+                    filas = await tabla.query_selector_all('tr')
+                    
+                    for fila in filas:
+                        try:
+                            cells = await fila.query_selector_all('th, td')
+                            if len(cells) >= 2:
+                                key = await cells[0].text_content()
+                                value = await cells[1].text_content()
+                                
+                                if key and value:
+                                    key_clean = key.strip()
+                                    value_clean = value.strip()
+                                    
+                                    if (key_clean and value_clean and 
+                                        key_clean != value_clean and 
+                                        len(key_clean) > 1):
+                                        categoria_data[key_clean] = value_clean
+                        except:
+                            continue
+                    
+                    if categoria_data:
+                        categorias[categoria_nombre] = categoria_data
+                
+                except Exception as e:
+                    continue
+            
+            print(f"   ⚡ {len(categorias)} categorías extraídas (modo optimizado)")
+            return categorias
+            
+        except Exception as e:
+            print(f"⚠️ Error en extracción optimizada: {e}")
+            return {} 

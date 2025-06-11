@@ -4,13 +4,13 @@
 # ===== DEPENDENCIAS PRINCIPALES =====
 
 # Scraping y automatización browser
-playwright>=1.52.0              # Automatización browser con JavaScript completo
+playwright==1.49.0
 
 # Validación y modelado de datos
-pydantic>=2.5.0                 # Validación de datos tipada y configuraciones
+pydantic==2.10.4
 
 # Procesamiento de datos
-polars>=0.20.0                  # Manipulación de datos de alto rendimiento
+polars==0.20.31
 
 # Programación asíncrona (incluida en Python 3.8+)
 # asyncio - Incluido en Python estándar
@@ -28,8 +28,8 @@ alembic>=1.8.0                  # Migraciones de base de datos
 # ===== TESTING Y DESARROLLO =====
 
 # Framework de testing
-pytest>=7.4.0                   # Framework de testing principal
-pytest-asyncio>=0.21.0          # Testing para código asíncrono
+pytest==8.0.0
+pytest-asyncio==0.24.0
 
 # Herramientas de desarrollo
 black>=23.7.0                   # Formateado de código
@@ -68,4 +68,15 @@ plotly>=5.15.0                  # Gráficos interactivos
 # - playwright install chromium es REQUERIDO después de pip install
 # - PostgreSQL es opcional, el sistema funciona con SQLite por defecto
 # - Las dependencias de análisis son opcionales para uso básico
-# - Python 3.8+ requerido para asyncio completo 
+# - Python 3.8+ requerido para asyncio completo
+
+# JSON Y VALIDACIÓN
+jsonschema==4.21.1
+
+# UTILITIES
+faker==33.1.0
+
+# DATA STRUCTURES (Para compatibilidad Python < 3.7)
+# dataclasses es built-in desde Python 3.7+
+# Si usas Python 3.6 descomenta la siguiente línea:
+# dataclasses==0.8 

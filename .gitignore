@@ -35,6 +35,7 @@ test_*_*.json
 *_20250609_*.json
 temp_*.json
 debug_*.json
+scraping_masivo*.json
 
 # Scripts experimentales (PATRONES)
 *_test.py
