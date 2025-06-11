@@ -1,4 +1,4 @@
-# Python
+# Python básico
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,22 +8,20 @@ env/
 venv/
 .venv/
 
-# Environment variables
+# Environment variables y seguridad
 .env
 .env.local
 .env_tokens
-
-# OAuth tokens and sensitive data
 tokens/
 *.token
 auth_tokens.json
 
-# IDE files (keep local settings, don't upload to GitHub)
+# IDEs
 .cursor/
 .vscode/
 .idea/
 
-# OS files
+# Sistema operativo
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -32,36 +30,19 @@ desktop.ini
 *.log
 logs/
 
-# Data (uncomment next line if you DON'T want to upload collected data)
-# data/
-
-# Test results and temporary JSON files
+# Archivos temporales del proyecto (PATRONES, no nombres específicos)
 test_*_*.json
 *_20250609_*.json
-test_extractores_reales_*.json
-test_scraping_seguro_*.json
+temp_*.json
+debug_*.json
 
-# Specific obsolete scripts (by name to be safe)
-test_scraping_con_extractores_reales.py
-test_scraping_real_seguro.py
-test_scraper_con_proxies.py
-test_10_propiedades_morelos_optimizado.py
-analizar_estructura_html.py
-verify_exact_config.py
-scraper_ultra_avanzado_2025_con_proxies.py
-playwright_property_collector.py
+# Scripts experimentales (PATRONES)
+*_test.py
+*_debug.py
+experimental_*.py
+temp_*.py
+old_*.py
 
-# Old experimental scripts (uncomment to hide from GitHub)
-property_collector_v1.py
-property_collector_v2.py
-public_property_collector.py
-working_property_collector.py
-investigate_403_error.py
-debug_auth.py
-test_credentials.py
-api_test.py
-api_test_public.py
-env_example.txt
-setup_env.py
-extrae_html_con_operacion.py
-OFICIAL_Scrolling_instalacion_extraccion_links_v2.py
+# Esquemas temporales
+schema2.sql
+temp_*.sql

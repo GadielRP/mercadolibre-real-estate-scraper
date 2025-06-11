@@ -1,45 +1,71 @@
-# MercadoLibre API Collector - Dependencies
-# Core API and HTTP libraries
-requests>=2.31.0
-httpx>=0.25.0
+# Sistema de Scraping Inmobiliario - MercadoLibre
+# Dependencias del proyecto modular híbrido
 
-# Data processing and validation
-pydantic>=2.5.0
-polars>=0.20.0
+# ===== DEPENDENCIAS PRINCIPALES =====
 
-# Database connectivity
-asyncpg>=0.29.0
-psycopg2-binary>=2.9.9
+# Scraping y automatización browser
+playwright>=1.52.0              # Automatización browser con JavaScript completo
 
-# Web scraping
-beautifulsoup4>=4.12.0
-playwright>=1.52.0
+# Validación y modelado de datos
+pydantic>=2.5.0                 # Validación de datos tipada y configuraciones
 
-# Environment and configuration
-python-dotenv>=1.0.0
+# Procesamiento de datos
+polars>=0.20.0                  # Manipulación de datos de alto rendimiento
 
-# Development and testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
+# Programación asíncrona (incluida en Python 3.8+)
+# asyncio - Incluido en Python estándar
 
-# Optional: Data analysis
-pandas>=2.1.0
-numpy>=1.25.0
+# ===== DEPENDENCIAS DE BASE DE DATOS =====
 
-# Configuration and Environment
-pydantic-settings>=2.0.0
+# PostgreSQL (producción)
+asyncpg>=0.29.0                 # Cliente PostgreSQL asíncrono
+psycopg2-binary>=2.9.9          # PostgreSQL driver
 
-# Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
+# SQLAlchemy para ORM
+sqlalchemy>=2.0.0               # ORM y query builder
+alembic>=1.8.0                  # Migraciones de base de datos
 
-# Utilities
-rich>=13.5.0           # Beautiful terminal output
-typer>=0.9.0          # CLI interface
-loguru>=0.7.0         # Better logging
-tenacity>=8.2.0       # Retry logic
+# ===== TESTING Y DESARROLLO =====
 
-# Development tools
-black>=23.7.0         # Code formatting
-isort>=5.12.0         # Import sorting
-mypy>=1.5.0          # Type checking 
+# Framework de testing
+pytest>=7.4.0                   # Framework de testing principal
+pytest-asyncio>=0.21.0          # Testing para código asíncrono
+
+# Herramientas de desarrollo
+black>=23.7.0                   # Formateado de código
+isort>=5.12.0                   # Organización de imports
+mypy>=1.5.0                     # Type checking estático
+
+# ===== UTILIDADES =====
+
+# Logging y output
+rich>=13.5.0                    # Output terminal mejorado
+loguru>=0.7.0                   # Logging avanzado
+
+# CLI y configuración
+typer>=0.9.0                    # Interfaz de línea de comandos
+python-dotenv>=1.0.0            # Variables de entorno
+
+# Manejo de errores y reintentos
+tenacity>=8.2.0                 # Lógica de reintentos
+
+# ===== ANÁLISIS OPCIONAL =====
+
+# Análisis de datos básico
+pandas>=2.1.0                   # Análisis de datos (opcional)
+numpy>=1.25.0                   # Operaciones numéricas (opcional)
+
+# Visualización (opcional para dashboards futuros)
+matplotlib>=3.7.0               # Gráficos básicos
+seaborn>=0.12.0                 # Gráficos estadísticos
+plotly>=5.15.0                  # Gráficos interactivos
+
+# ===== INSTALACIÓN =====
+# pip install -r requirements.txt
+# playwright install chromium
+
+# ===== NOTAS =====
+# - playwright install chromium es REQUERIDO después de pip install
+# - PostgreSQL es opcional, el sistema funciona con SQLite por defecto
+# - Las dependencias de análisis son opcionales para uso básico
+# - Python 3.8+ requerido para asyncio completo 

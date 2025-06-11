@@ -10,14 +10,14 @@ CREATE TABLE "propiedades" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     
     -- Identificación y Básicos (Obligatorios)
-    "ml_id" TEXT UNIQUE,  -- ID de MercadoLibre
+    "ml_id" TEXT UNIQUE,  -- ID de MercadoLibre (ejemplo: MLM-3132916012)
     "url" TEXT UNIQUE NOT NULL,
     "titulo" TEXT NOT NULL DEFAULT 'Sin título',
     "tipo_operacion" TEXT CHECK("tipo_operacion" IN ('venta', 'renta')) NOT NULL DEFAULT 'venta',
     "tipo_propiedad" TEXT CHECK("tipo_propiedad" IN ('casa', 'departamento', 'terreno', 'local', 'oficina')) NOT NULL DEFAULT 'casa',
     "precio" DECIMAL(15,2) NOT NULL DEFAULT 0.0,
     "moneda" TEXT CHECK("moneda" IN ('MXN', 'USD')) NOT NULL DEFAULT 'MXN',
-    "descripcion" TEXT DEFAULT '',
+    
     
     -- Ubicación (Obligatorios)
     "pais" TEXT NOT NULL DEFAULT 'No especificado',
@@ -32,7 +32,6 @@ CREATE TABLE "propiedades" (
     "recamaras" INTEGER NOT NULL DEFAULT 0,
     "banos" DECIMAL(3,1) NOT NULL DEFAULT 0.0,
     "estacionamiento" INTEGER NOT NULL DEFAULT 0,
-    "ambientes" INTEGER NOT NULL DEFAULT 0,
     "pisos" INTEGER NOT NULL DEFAULT 1,
     "antiguedad" INTEGER NOT NULL DEFAULT 0,
     
@@ -40,13 +39,8 @@ CREATE TABLE "propiedades" (
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "is_active" BOOLEAN DEFAULT 1,
-    "fuente" TEXT DEFAULT 'mercadolibre',
+    "fuente" TEXT DEFAULT 'mercadolibre', -- por ahora la unica fuente es mercadolibre, pero en el futuro se puede agregar mas fuentes como (inmuebles24, facebook marketplace, etc.)
     
-    -- Metadatos de Extracción
-    "calidad_extraccion" INTEGER DEFAULT 0,
-    "last_scraped" TIMESTAMP,
-    "error_extraccion" TEXT,
-    "proxy_usado" TEXT
 );
 
 -- Tabla de características adicionales (similar a la estructura actual)
