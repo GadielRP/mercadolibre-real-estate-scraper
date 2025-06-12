@@ -108,6 +108,7 @@ class ResultadoPropiedad:
     direccion: Optional[str] = None
     tipo_propiedad: Optional[str] = None
     tipo_operacion: Optional[str] = None
+    vendedor: Optional[str] = None
     
     # 🆕 CAMPOS ADICIONALES UNIVERSALES PARA DB
     ml_id: Optional[str] = None

@@ -21,63 +21,82 @@ Sistema de scraping masivo especializado en inmuebles de MercadoLibre México, d
 
 ## 🏗️ **Arquitectura del Sistema**
 
-### **Diseño Modular (6 Componentes Principales)**
+### **Estructura de Doble Script Principal (v2.1.1)**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                ORQUESTADOR PRINCIPAL                     │
-│         scraper_masivo_cuernavaca.py                    │
-│                                                         │
-│  • Coordinación del proceso completo                    │
-│  • Gestión de estadísticas centralizadas               │
-│  • Control de errores y recuperación                    │
-└─────────────────┬───────────────────────────────────────┘
-                  │
-                  ├─────── CONFIGURACIÓN ──────┐
-                  │                            │
-┌─────────────────▼───────────────────┐        │  ┌──────────────▼──────────────┐
-│         NAVEGACIÓN STEALTH          │        │  │      MODELOS Y CONFIG        │
-│          navigation.py              │        │  │        models.py             │
-│                                     │        │  │                             │
-│  • Sistema antibloqueo multicapa    │        │  │  • Configuraciones centrales│
-│  • Session management automático    │        │  │  • Estructuras de datos     │
-│  • Rate limiting inteligente        │        │  │  • Parámetros del sistema   │
-│  • Circuit breaker protection       │        │  │  • User agents y viewports  │
-└─────────────────┬───────────────────┘        │  └─────────────────────────────┘
-                  │                            │
-┌─────────────────▼───────────────────┐        │  ┌──────────────▼──────────────┐
-│      EXTRACCIÓN HÍBRIDA             │        │  │      TESTING Y ANÁLISIS      │
-│        extractors.py                │        │  │       test_runner.py         │
-│                                     │        │  │                             │
-│  • Campos universales estructurados │        │  │  • Reportes estadísticos    │
-│  • Categorías dinámicas JSON        │        │  │  • Validación de calidad    │
-│  • Parsing inteligente ubicaciones  │        │  │  • Análisis comparativo     │
-│  • Normalización automática         │        │  │  • Exportación estructurada │
-└─────────────────┬───────────────────┘        │  └─────────────────────────────┘
-                  │                            │
-┌─────────────────▼───────────────────┐        │  ┌──────────────▼──────────────┐
-│    GESTIÓN DE ESTADÍSTICAS          │        │  │      UTILIDADES MODULARES    │
-│      session_stats.py               │        │  │    utils.py / direccion_    │
-│                                     │        │  │      _utils.py              │
-│  • SessionStatsManager centralizado │        │  │                             │
-│  • Circuit breaker con cooldown     │        │  │  • Parsing numérico seguro  │
-│  • Control de rate limiting         │        │  │  • Procesamiento direcciones│
-│  • Rotación automática de sesiones  │        │  │  • Funciones de utilidad    │
-└─────────────────────────────────────┘        │  └─────────────────────────────┘
-                                               │
-                                               └── COMPARTIDO POR TODOS
+┌───────────────────────── SCRIPTS PRINCIPALES ─────────────────────────┐
+│                                                                        │
+│  ┌─────────────────────┐                ┌────────────────────────────┐  │
+│  │      main.py        │                │  test_single_url.py        │  │
+│  │ ─────────────────── │                │ ────────────────────────── │  │
+│  │ • Menú interactivo  │                │ • Testing individual URL  │  │
+│  │ • Scraping masivo   │                │ • Debugging detallado     │  │
+│  │ • Selección cantidad│                │ • Reportes técnicos       │  │
+│  │ • Modo automático   │                │ • Validación de campos    │  │
+│  │ • Interface usuario │                │ • Análisis de extracción  │  │
+│  │ • Modo optimizado   │                │ • Modo optimizado/completo│  │
+│  └─────────────────────┘                └────────────────────────────┘  │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │
+                           ┌────────┴────────┐
+                           │ MÓDULOS NÚCLEO  │
+                           │   (8 archivos)  │
+                           └────────┬────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│                                   │                                   │
+├─── NAVEGACIÓN STEALTH ────────────┼─── EXTRACCIÓN HÍBRIDA ───────────┤
+│     navigation.py                 │     extractors.py                 │
+│                                   │                                   │
+│ • Sistema antibloqueo multicapa   │ • 16 campos universales optimizados │
+│ • Session management automático   │ • Categorías dinámicas JSON      │
+│ • Rate limiting inteligente       │ • Parsing tipo_operacion 100%    │
+│ • Circuit breaker protection      │ • Extracción vendedor implementada │
+│ • Paginación automática (100+)    │ • Normalización automática       │
+│                                   │ • Extracción cascada de campos   │
+│                                   │                                   │
+├─── GESTIÓN DE ESTADÍSTICAS ──────┼─── MODELOS Y CONFIGURACIÓN ──────┤
+│     session_stats.py              │     models.py                     │
+│                                   │                                   │
+│ • SessionStatsManager centralizado│ • Configuraciones centralizadas  │
+│ • Circuit breaker con cooldown    │ • Estructuras de datos Pydantic  │
+│ • Control de rate limiting        │ • Parámetros del sistema         │
+│ • Rotación automática sesiones    │ • User agents y viewports pool   │
+│                                   │                                   │
+├─── UTILIDADES MODULARES ─────────┼─── TESTING Y ANÁLISIS ───────────┤
+│     utils.py / direccion_utils.py │     test_runner.py                │
+│                                   │                                   │
+│ • Parsing numérico consolidado    │ • Reportes estadísticos          │
+│ • Procesamiento direcciones       │ • Validación de calidad          │
+│ • Funciones de utilidad comunes   │ • Análisis comparativo           │
+│ • Normalización de ubicaciones    │ • Exportación estructurada       │
+└───────────────────────────────────┼───────────────────────────────────┘
 ```
 
-### **Flujo Arquitectural Optimizado**
+### **Flujo Arquitectural Optimizado (v2.1.1)**
 
 ```
-Inicio → Browser Stealth Setup → Session Warming Optimizado (8-12s)
-    ↓
-Extracción URLs → Procesamiento Masivo (18s/propiedad promedio)
-    ↓
-SessionStats → Circuit Breaker → Rate Limiting → Session Rotation
-    ↓
-Extracción Híbrida → Validación → Normalización → Almacenamiento → Reportes
+┌─── SCRIPT PRINCIPAL ───┐     ┌─── FLUJO DE EJECUCIÓN ───┐
+│                        │     │                          │
+│ main.py                │ ──→ │ Browser Stealth Setup    │
+│ • Menú interactivo     │     │ Session Warming (8-12s)  │
+│ • Selección cantidad   │     │          ↓               │
+│ • Configuración auto   │     │ URL Extracción           │
+│                        │     │ • Manual: cantidad fija  │
+│ test_single_url.py     │     │ • Auto-paginación 100+   │
+│ • Debug individual     │     │          ↓               │
+│ • Análisis técnico     │     │ Procesamiento Masivo     │
+│ • Validación de campos │     │ • 18s/propiedad promedio │
+└────────────────────────┘     │ • SessionStats continuo  │
+                               │          ↓               │
+                               │ Extracción Híbrida       │
+                               │ • Campos universales     │
+                               │ • Categorías dinámicas   │
+                               │ • tipo_operacion 100%    │
+                               │          ↓               │
+                               │ Validación → Reportes    │
+                               └──────────────────────────┘
 ```
 
 ### **Patrones Arquitecturales**
@@ -188,6 +207,7 @@ Extracción Híbrida → Validación → Normalización → Almacenamiento → R
     "ml_id": str,
     "titulo": str,
     "descripcion": str,
+    "vendedor": str,
     
     # CATEGORÍAS DINÁMICAS JSON (NoSQL flexible)
     "servicios": {"campo": "valor", ...},
@@ -214,7 +234,7 @@ Extracción Híbrida → Validación → Normalización → Almacenamiento → R
 ### **Métricas de Performance Validadas en Producción**
 - **Velocidad**: 18s/propiedad (incluye medidas anti-bloqueo)
 - **Tasa de éxito**: 100% (0% bloqueos en pruebas 5 propiedades)
-- **Efectividad campos**: 100% campos universales extraídos
+- **Efectividad campos**: 100% campos universales extraídos (16 campos)
 - **Memoria**: < 500MB durante ejecución masiva
 - **CPU**: < 30% utilización promedio
 
@@ -329,12 +349,14 @@ Analytics Service ← API Gateway ← Monitoring Service
 
 ## 🎯 **Estado Actual y Evolución Arquitectural**
 
-### **✅ Fase Actual: Sistema Híbrido Modular (COMPLETADO)**
-- ✅ **Sistema modular** con 6 componentes especializados
+### **✅ Fase Actual: Sistema de Doble Script Optimizado (COMPLETADO)**
+- ✅ **Estructura modular limpia** con 8 componentes especializados (<500 líneas)
+- ✅ **Scripts principales funcionales** (main.py + test_single_url.py)
 - ✅ **Antibloqueo validado** al nivel de mejores prácticas 2025
 - ✅ **Performance optimizada** 18s/propiedad con 100% éxito
-- ✅ **Extracción híbrida** completamente funcional
-- ✅ **SessionStatsManager** centralizado
+- ✅ **Extracción híbrida** completamente funcional con paginación automática
+- ✅ **SessionStatsManager** centralizado y optimizado
+- ✅ **Tipo_operacion** extracción 100% exitosa con función mejorada
 
 ### **🔄 Fase Intermedia: Integración Base de Datos (EN PROGRESO)**
 - 🔄 Separación en microservicios independientes
@@ -371,7 +393,8 @@ El sistema está **al nivel de mejores prácticas profesionales 2025** y puede u
 
 ---
 
-**Versión de Arquitectura**: v2.1 - Sistema Validado Profesional  
-**Estado**: Validado en Producción - Ready para Scale  
-**Próxima Evolución**: Integración PostgreSQL y Análisis de Mercado
+**Versión de Arquitectura**: v2.1.1 - Sistema de Doble Script Optimizado  
+**Estado**: Estructura Limpia - Ready para Producción
+**Últimas Mejoras**: Paginación automática + tipo_operacion 100% + estructura modular limpia
+**Próxima Evolución**: Integración PostgreSQL y Análisis de Mercado  
 **Validación**: Investigación Exhaustiva Completada (Enero 2025) 

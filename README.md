@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![Playwright](https://img.shields.io/badge/Playwright-Latest-green.svg)](https://playwright.dev)
 [![Status](https://img.shields.io/badge/Status-Validado%20Profesional-success.svg)]()
-[![Version](https://img.shields.io/badge/Version-v2.1-blue.svg)]()
+[![Version](https://img.shields.io/badge/Version-v2.1.1-blue.svg)]()
 [![Performance](https://img.shields.io/badge/Performance-18s%2Fpropiedad-brightgreen.svg)]()
 [![Anti-Blocking](https://img.shields.io/badge/Anti--Blocking-Nivel%20Profesional%202025-gold.svg)]()
 [![License](https://img.shields.io/badge/License-Private-red.svg)]()
@@ -14,6 +14,56 @@
 > **Última Actualización**: Enero 2025
 
 Sistema avanzado de scraping especializado en extracción masiva de datos inmobiliarios de MercadoLibre México. Implementa arquitectura modular híbrida con **sistema antibloqueo al nivel de mejores prácticas 2025** y extracción inteligente para generar datasets estructurados listos para análisis de mercado.
+
+---
+
+## 🚀 **SCRIPTS PRINCIPALES - CÓMO USAR EL SISTEMA**
+
+### **1. 📱 Script Principal: `main.py`**
+```bash
+python main.py
+```
+**✨ Interfaz completa con menú interactivo**
+
+**Funcionalidades:**
+- ✅ **Scraping masivo** con paginación automática
+- ✅ **Configuración sencilla** (solo ingresar número de propiedades)
+- ✅ **Estadísticas en tiempo real** del progreso
+- ✅ **Reportes automáticos** en formato JSON
+- ✅ **Sistema antibloqueo integrado** nivel profesional ⭐⭐⭐⭐⭐
+
+**Uso típico:**
+```bash
+python main.py
+# Seleccionar: 1 (Scraping Masivo)
+# Ingresar: 50 (número de propiedades)
+# Resultado: archivo JSON con 50 propiedades procesadas
+```
+
+---
+
+### **2. 🧪 Script de Testing: `test_single_url.py`**
+```bash
+python test_single_url.py
+```
+**🔍 Para debugging y pruebas específicas**
+
+**Funcionalidades:**
+- ✅ **Test de URLs individuales** de MercadoLibre
+- ✅ **Logs detallados** para análisis técnico
+- ✅ **Validación completa** de todos los campos (16 campos universales)
+- ✅ **Reporte específico** por propiedad incluyendo vendedor
+- ✅ **Modo optimizado** por defecto (sin datos raw innecesarios)
+- ✅ **Modo completo** opcional para análisis detallado
+- ✅ **Visualización del JSON** extraído
+
+**Uso típico:**
+```bash
+python test_single_url.py
+# Pegar URL: https://casa.mercadolibre.com.mx/MLM-123456...
+# Revisar reporte detallado generado
+# Ver JSON completo (opcional)
+```
 
 ---
 
@@ -61,10 +111,11 @@ Automatización completa del proceso de recolección de datos inmobiliarios desd
    ├── Popup handling automático
    └── Establecimiento de patrones humanos
 
-3. EXTRACCIÓN DE URLS INTELIGENTE
-   ├── Detección automática de páginas de listado
-   ├── Extracción de URLs de propiedades individuales
-   └── Paginación inteligente
+3. EXTRACCIÓN DE URLS CON PAGINACIÓN AUTOMÁTICA
+   ├── Detección automática de múltiples páginas
+   ├── Patrón URL MercadoLibre optimizado
+   ├── Navegación directa (más rápida que botones)
+   └── Procesamiento eficiente 100+ propiedades
 
 4. PROCESAMIENTO MASIVO CON SESSIONSTATSMANAGER
    ├── Loop de procesamiento por propiedad (18s promedio)
@@ -74,7 +125,8 @@ Automatización completa del proceso de recolección de datos inmobiliarios desd
    └── Detección de bloqueos solo si extracción falla
 
 5. EXTRACCIÓN HÍBRIDA ULTRA-OPTIMIZADA
-   ├── 15 campos universales estructurados (100% efectividad)
+   ├── 16 campos universales estructurados (100% efectividad)
+   ├── Tipos de propiedad/operación (función optimizada)
    ├── Categorías dinámicas JSON flexibles
    ├── Parsing automático de ubicaciones
    └── Backup completo de raw data (opcional)
@@ -110,11 +162,15 @@ Automatización completa del proceso de recolección de datos inmobiliarios desd
 
 ## 📁 **Estructura del Proyecto**
 
-### **Organización de Archivos**
+### **🚀 SCRIPTS EJECUTABLES**
 
 ```
 scrapping_mercadolibre/
-├── 🚀 COMPONENTES PRINCIPALES
+├── 🎯 SCRIPTS PRINCIPALES
+│   ├── main.py                         # Script principal con menú interactivo
+│   └── test_single_url.py              # Test de URLs individuales para debugging
+│
+├── 🛠️ MÓDULOS CORE (No ejecutar directamente)
 │   ├── scraper_masivo_cuernavaca.py    # Orquestador principal
 │   ├── navigation.py                   # Sistema stealth nivel profesional
 │   ├── extractors.py                   # Extracción híbrida ultra-optimizada
@@ -127,7 +183,7 @@ scrapping_mercadolibre/
 │   └── direccion_utils.py              # Procesamiento de direcciones
 │
 ├── 📊 DATOS Y RESULTADOS
-│   ├── scraping_masivo_*.json          # Resultados con timestamps
+│   ├── *.json                          # Resultados con timestamps (autogenerados)
 │   └── schema.sql                      # Esquema de base de datos
 │
 ├── 📋 DOCUMENTACIÓN
@@ -143,6 +199,8 @@ scrapping_mercadolibre/
 
 | Módulo | Propósito | Funcionalidades Clave | Estado |
 |--------|-----------|----------------------|--------|
+| **main.py** | Script Principal | Menú interactivo, configuración sencilla | ✅ |
+| **test_single_url.py** | Testing Individual | Debugging, validación específica | ✅ |
 | **scraper_masivo_cuernavaca.py** | Orquestación | Coordinación completa, estadísticas centralizadas | ✅ |
 | **navigation.py** | Anti-bloqueo | Stealth 2025, rate limiting, session rotation | ✅ |
 | **extractors.py** | Extracción | Campos universales, categorías JSON, parsing inteligente | ✅ |
@@ -157,11 +215,11 @@ scrapping_mercadolibre/
 
 ### **Capacidades de Extracción Validadas**
 
-**Campos Universales Estructurados (15 campos - 100% efectividad):**
+**Campos Universales Estructurados (16 campos - 100% efectividad):**
 - **Físicos**: recámaras, baños, construcción (m²), terreno (m²), estacionamiento
 - **Comerciales**: precio, moneda, tipo_propiedad, tipo_operacion
 - **Ubicación**: dirección, estado, ciudad (parsing automático)
-- **Metadatos**: ml_id, título, descripción
+- **Metadatos**: ml_id, título, descripción, vendedor
 
 **Categorías Dinámicas JSON (95-100% efectividad):**
 - **Servicios**: Internet, A/C, gas, cisterna, electricidad, etc.
@@ -195,6 +253,12 @@ scrapping_mercadolibre/
 - **100+ propiedades**: Implementar proxies residenciales DataImpulse
 - **Múltiples instancias**: 2-3 scrapers paralelos con IPs diferentes
 - **Database integration**: PostgreSQL para almacenamiento escalable
+
+### **🎯 Paginación Automática Inteligente (Nueva)**
+- 🔄 **Detección automática** de múltiples páginas
+- 📄 **Patrón URL MercadoLibre** optimizado: `_Desde_{offset}_NoIndex_True`
+- ⚡ **Navegación directa** (más rápida que botones)
+- 🎯 **Procesamiento eficiente** de 100+ propiedades
 
 ---
 
@@ -266,9 +330,10 @@ RATE_LIMITS = {
 
 # Configuración de extracción optimizada
 EXTRACTION_CONFIG = {
-    'include_raw_data': False,          # Modo rápido por default
-    'fast_mode': True,                  # Optimizado para velocidad
+    'include_raw_data': False,          # Modo optimizado por default
+    'fast_mode': True,                  # Optimizado para velocidad y performance
     'retry_failed_properties': 3,       # Reintentos por propiedad fallida
+    'vendor_extraction': True,          # Extracción de vendedor habilitada
 }
 ```
 
@@ -276,44 +341,69 @@ EXTRACTION_CONFIG = {
 
 ## 🎮 **Uso del Sistema**
 
-### **Ejecución Básica (Recomendada)**
+### **✨ Ejecución Principal (Recomendada)**
 
 ```bash
-# Scraping masivo con configuración validada
-python scraper_masivo_cuernavaca.py
+# Script principal con menú interactivo
+python main.py
 ```
 
-**El sistema preguntará:**
-- Número máximo de propiedades a procesar (default: 20)
-- URL específica o detección automática de página
-- Configuración de rate limiting
+**Opciones del menú:**
+1. **🚀 Scraping Masivo** (opción principal)
+2. **🔧 Configuración Avanzada** (información del sistema)
+3. **📊 Estadísticas** (métricas de performance)
+4. **❌ Salir**
 
-### **Ejecución con Configuración Personalizada**
+**Proceso típico:**
+1. Ejecutar `python main.py`
+2. Seleccionar opción 1
+3. Ingresar número de propiedades (ej: 50)
+4. El sistema se encarga del resto automáticamente
 
-**Modificar configuración antes de ejecutar:**
-```python
-# Editar models.py para personalizar
-class ConfiguracionHibridaUltraAvanzada:
-    MAX_PROPIEDADES = 50           # Máximo recomendado sin proxies
-    FAST_MODE = True               # Modo rápido sin raw data
-    RATE_LIMIT_RPM = 4            # Rate conservador validado
-    SESSION_ROTATION = (15, 25)   # Rotación validada
+---
+
+### **🧪 Testing y Debugging**
+
+```bash
+# Test de URL individual para debugging
+python test_single_url.py
 ```
 
-### **Monitoreo Durante Ejecución**
+**Funcionalidades del test:**
+- Validación de URLs de MercadoLibre México
+- Extracción completa con logs detallados
+- Reporte específico por propiedad
+- Opción de ver JSON completo extraído
+- Análisis de todos los campos
 
-**Información en Tiempo Real:**
-```
-🏠 Propiedad [5/5] | ⏱️ 18.2s | ✅ Éxito | 💾 23 campos extraídos
-📊 Efectividad: 100% | 🛡️ 0 bloqueos detectados | 🔄 Sesión: 5/25
-✅ Página saludable: Casa en Venta en Lomas de Cuernavaca
+---
+
+### **📊 Ejemplos de Uso**
+
+#### **Escenario 1: Análisis de Mercado (50 propiedades)**
+```bash
+python main.py
+# Seleccionar: 1 (Scraping Masivo)
+# Ingresar: 50
+# Tiempo estimado: ~15 minutos
+# Resultado: Dataset completo para análisis
 ```
 
-**Logs Detallados Optimizados:**
-- Tiempo real por propiedad procesada (objetivo: <20s)
-- Efectividad de extracción por campo individual
-- Estado del sistema antibloqueo (0% bloqueos objetivo)
-- Uso de memoria y performance en tiempo real
+#### **Escenario 2: Test Rápido (5 propiedades)**
+```bash
+python main.py
+# Seleccionar: 1 (Scraping Masivo)
+# Ingresar: 5
+# Tiempo estimado: ~2 minutos
+# Resultado: Validación rápida del sistema
+```
+
+#### **Escenario 3: Debugging URL Específica**
+```bash
+python test_single_url.py
+# Pegar URL específica de MercadoLibre
+# Resultado: Análisis detallado de extracción
+```
 
 ---
 
@@ -347,7 +437,10 @@ class ConfiguracionHibridaUltraAvanzada:
       "precio": "100%",
       "direccion": "100%",
       "construccion": "100%",
-      "terreno": "100%"
+      "terreno": "100%",
+      "tipo_propiedad": "100%",
+      "tipo_operacion": "100%",
+      "vendedor": "100%"
     },
     "categorias_dinamicas": {
       "servicios": "100%",
@@ -370,8 +463,9 @@ class ConfiguracionHibridaUltraAvanzada:
       "direccion": "Xochitepec 07, Otra Colonia, Cuernavaca, Morelos",
       "estado": "Morelos",
       "ciudad": "Cuernavaca",
-      "tipo_propiedad": "Casa",
-      "tipo_operacion": "Venta",
+      "tipo_propiedad": "casa",
+      "tipo_operacion": "venta",
+      "vendedor": "Savbienesraices",
       "servicios": {
         "internet": "Sí",
         "aire_acondicionado": "Sí",
@@ -410,6 +504,7 @@ class ConfiguracionHibridaUltraAvanzada:
 | `ciudad` | string | Ciudad (parsing automático) | 100% ✅ |
 | `tipo_propiedad` | string | Casa, Departamento, etc. | 100% ✅ |
 | `tipo_operacion` | string | Venta, Renta | 100% ✅ |
+| `vendedor` | string | Nombre del vendedor/inmobiliaria | 100% ✅ |
 
 ---
 
@@ -466,6 +561,7 @@ CREATE TABLE propiedades (
     tipo_operacion VARCHAR(20),
     titulo TEXT,
     descripcion TEXT,
+    vendedor VARCHAR(100),
     created_at TIMESTAMP DEFAULT NOW(),
     
     -- Índices automáticos para performance
@@ -669,7 +765,8 @@ pre-commit install
 
 ### **Estadísticas del Código**
 - **Líneas de código**: ~2,800 líneas (incremento por modularización)
-- **Módulos principales**: 7 componentes especializados (<500 líneas c/u)
+- **Módulos principales**: 8 componentes especializados (<500 líneas c/u)
+- **Scripts ejecutables**: 2 (main.py, test_single_url.py)
 - **Cobertura de validación**: 100% en campos críticos
 - **Performance validada**: 18s/propiedad en producción
 
@@ -683,6 +780,14 @@ pre-commit install
 ---
 
 ## 📋 **Changelog**
+
+### **v2.1.1** (Enero 2025) - Estructura Optimizada ✅
+- ✅ **Scripts principales reorganizados**: `main.py` y `test_single_url.py`
+- ✅ **Interfaz mejorada**: Menú interactivo en script principal
+- ✅ **Testing optimizado**: Script dedicado para URLs individuales
+- ✅ **Función tipos optimizada**: 100% precisión tipo_propiedad/tipo_operacion
+- ✅ **Limpieza de archivos**: Eliminados scripts de prueba obsoletos
+- ✅ **Documentación actualizada**: README reflejando nueva estructura
 
 ### **v2.1.0** (Enero 2025) - Validación Profesional Completada ✅
 - ✅ **Investigación exhaustiva** de mejores prácticas anti-bloqueo 2025
@@ -753,12 +858,17 @@ cd scrapping_mercadolibre
 pip install -r requirements.txt
 playwright install chromium
 
-# Ejecución con configuración validada
-python scraper_masivo_cuernavaca.py
-# Ingrese: 5 (para prueba rápida)
+# Ejecución con script principal
+python main.py
+# Seleccionar: 1 (Scraping Masivo)
+# Ingresar: 5 (para prueba rápida)
+
+# Test de URL individual (opcional)
+python test_single_url.py
+# Pegar URL de MercadoLibre para test
 
 # Verificar resultados exitosos
-ls -la scraping_masivo_*.json
+ls -la *.json
 ```
 
 **Resultado Esperado:**
@@ -769,8 +879,9 @@ ls -la scraping_masivo_*.json
 
 ---
 
-**Versión del Sistema**: v2.1 - Validado Profesional  
+**Versión del Sistema**: v2.1.1 - Estructura Optimizada  
 **Estado Actual**: Ready para Producción - Sin Cambios Necesarios  
 **Validación**: Investigación Anti-Bloqueo Completada (Enero 2025)  
 **Performance**: 18s/propiedad, 100% éxito, 0% bloqueos  
-**Nivel Anti-Bloqueo**: Profesional ⭐⭐⭐⭐⭐
+**Nivel Anti-Bloqueo**: Profesional ⭐⭐⭐⭐⭐  
+**Scripts Principales**: `main.py` (principal), `test_single_url.py` (testing)

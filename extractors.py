@@ -210,6 +210,7 @@ class ExtractorHibridoOptimizado:
             print("🔢 Extrayendo campos estructurados...")
             await self._extraer_precio_y_moneda(page, datos)
             await self._extraer_tipo_propiedad_y_operacion(page, datos)
+            await self._extraer_vendedor(page, datos)
             await self._extraer_direccion(page, datos)
             
             # Parsear ubicación completa
@@ -256,7 +257,7 @@ class ExtractorHibridoOptimizado:
                     datos_reorganizados[campo] = datos[campo]
             
             # Segundo: Campos estructurados básicos
-            campos_estructurados = ['precio', 'tipo_propiedad', 'tipo_operacion', 'recamaras', 'banos', 'construccion', 'terreno', 'estacionamiento', 'moneda']
+            campos_estructurados = ['precio', 'tipo_propiedad', 'tipo_operacion', 'vendedor', 'recamaras', 'banos', 'construccion', 'terreno', 'estacionamiento', 'moneda']
             for campo in campos_estructurados:
                 if campo in datos:
                     datos_reorganizados[campo] = datos[campo]
@@ -322,34 +323,164 @@ class ExtractorHibridoOptimizado:
             print(f"⚠️ Error extrayendo precio: {e}")
 
     async def _extraer_tipo_propiedad_y_operacion(self, page, datos):
-        """Extrae tipo de propiedad y operación"""
+        """
+        Extrae tipo de propiedad y operación desde el div ui-pdp-header__subtitle
+        Estructura: <div class="ui-pdp-header__subtitle"><span class="ui-pdp-subtitle">Casa en Venta</span></div>
+        """
+        # ✅ INICIALIZAR CAMPOS PRIMERO (fix del bug identificado)
+        datos['tipo_propiedad'] = None
+        datos['tipo_operacion'] = None
+        
         try:
-            title_element = await page.query_selector('h1')
-            if title_element:
-                title_text = await title_element.text_content()
-                if title_text:
-                    title_lower = title_text.lower()
-                    
-                    if 'casa' in title_lower:
-                        datos['tipo_propiedad'] = 'casa'
-                    elif 'departamento' in title_lower:
-                        datos['tipo_propiedad'] = 'departamento'
-                    elif 'terreno' in title_lower:
-                        datos['tipo_propiedad'] = 'terreno'
-                    
-                    if 'venta' in title_lower:
-                        datos['tipo_operacion'] = 'venta'
-                    elif 'renta' in title_lower:
-                        datos['tipo_operacion'] = 'renta'
+            print("🏷️ Extrayendo tipo de propiedad y operación desde subtitle...")
             
+            # ===== ESTRATEGIA 1: Selector específico del subtitle =====
+            subtitle_selectors = [
+                '.ui-pdp-subtitle',                              # 1. Simple y directo
+                '.ui-pdp-header__subtitle .ui-pdp-subtitle',     # 2. Específico por contexto  
+                '.ui-pdp-header__subtitle span',                 # 3. Por tipo de elemento
+                'span.ui-pdp-subtitle'                           # 4. Por elemento + clase
+            ]
+            
+            subtitle_text = None
+            
+            for selector in subtitle_selectors:
+                try:
+                    subtitle_element = await page.query_selector(selector)
+                    if subtitle_element:
+                        subtitle_text = await subtitle_element.text_content()
+                        if subtitle_text and len(subtitle_text.strip()) > 3:
+                            subtitle_text = subtitle_text.strip()
+                            print(f"  🎯 Subtitle encontrado con '{selector}': '{subtitle_text}'")
+                            break
+                except Exception as e:
+                    print(f"     ⚠️ Error con selector {selector}: {e}")
+                    continue
+            
+            # ===== PARSEAR TIPO DE PROPIEDAD Y OPERACIÓN =====
+            if subtitle_text:
+                subtitle_lower = subtitle_text.lower()
+                
+                # Normalizar tipo de propiedad
+                if any(word in subtitle_lower for word in ['casa', 'casas']):
+                    datos['tipo_propiedad'] = 'casa'
+                elif any(word in subtitle_lower for word in ['departamento', 'departamentos', 'depto', 'dpto']):
+                    datos['tipo_propiedad'] = 'departamento'
+                elif any(word in subtitle_lower for word in ['terreno', 'terrenos', 'lote', 'lotes']):
+                    datos['tipo_propiedad'] = 'terreno'
+                elif any(word in subtitle_lower for word in ['local', 'oficina', 'bodega']):
+                    datos['tipo_propiedad'] = 'comercial'
+                
+                # Normalizar tipo de operación
+                if any(word in subtitle_lower for word in ['venta', 'ventas', 'remate']):
+                    datos['tipo_operacion'] = 'venta'
+                elif any(word in subtitle_lower for word in ['renta', 'rentas', 'alquiler', 'alquila']):
+                    datos['tipo_operacion'] = 'renta'
+                elif any(word in subtitle_lower for word in ['traspaso', 'cesion']):
+                    datos['tipo_operacion'] = 'traspaso'
+                
+                print(f"  ✅ Extraído desde subtitle: tipo_propiedad='{datos['tipo_propiedad']}', tipo_operacion='{datos['tipo_operacion']}'")
+            
+            # ===== ESTRATEGIA FALLBACK: Buscar en título si subtitle falló =====
+            if not datos['tipo_propiedad'] or not datos['tipo_operacion']:
+                print("  🔄 Aplicando estrategia fallback desde título...")
+                
+                try:
+                    title_element = await page.query_selector('h1')
+                    if title_element:
+                        title_text = await title_element.text_content()
+                        if title_text:
+                            title_lower = title_text.lower()
+                            
+                            # Solo completar campos faltantes
+                            if not datos['tipo_propiedad']:
+                                if any(word in title_lower for word in ['casa', 'casas']):
+                                    datos['tipo_propiedad'] = 'casa'
+                                elif any(word in title_lower for word in ['departamento', 'departamentos', 'depto']):
+                                    datos['tipo_propiedad'] = 'departamento'
+                                elif any(word in title_lower for word in ['terreno', 'terrenos']):
+                                    datos['tipo_propiedad'] = 'terreno'
+                            
+                            if not datos['tipo_operacion']:
+                                if any(word in title_lower for word in ['venta', 'ventas', 'remate']):
+                                    datos['tipo_operacion'] = 'venta'
+                                elif any(word in title_lower for word in ['renta', 'rentas', 'alquiler']):
+                                    datos['tipo_operacion'] = 'renta'
+                            
+                            print(f"  🔄 Fallback desde título: tipo_propiedad='{datos['tipo_propiedad']}', tipo_operacion='{datos['tipo_operacion']}'")
+                            
+                except Exception as e:
+                    print(f"     ⚠️ Error en fallback desde título: {e}")
+            
+            # ===== VALORES POR DEFECTO FINALES =====
             if not datos['tipo_propiedad']:
-                datos['tipo_propiedad'] = 'casa'
+                datos['tipo_propiedad'] = 'N/A'  # Default más común
+                print("  🔧 Aplicando default: tipo_propiedad='casa'")
+            
             if not datos['tipo_operacion']:
-                datos['tipo_operacion'] = 'venta'
+                datos['tipo_operacion'] = 'N/A'  # Default más común
+                print("  🔧 Aplicando default: tipo_operacion='venta'")
+            
+            print(f"🏷️ ✅ Tipos finales: '{datos['tipo_propiedad']}' en '{datos['tipo_operacion']}'")
+            
+        except Exception as e:
+            print(f"❌ Error extrayendo tipos de propiedad y operación: {e}")
+            # FALLBACKS DE EMERGENCIA garantizados
+            datos['tipo_propiedad'] = datos.get('tipo_propiedad') or 'casa'
+            datos['tipo_operacion'] = datos.get('tipo_operacion') or 'venta'
+            print(f"🆘 Fallbacks de emergencia aplicados: '{datos['tipo_propiedad']}' en '{datos['tipo_operacion']}'")
+
+    async def _extraer_vendedor(self, page, datos):
+        """
+        Extrae información del vendedor desde el div ui-vip-profile-info__info-container
+        Estructura: <div class="ui-vip-profile-info__info-container">
+                       <div class="ui-vip-profile-info__info-link">
+                           <h3 class="ui-pdp-color--BLACK ui-pdp-size--XSMALL ui-pdp-family--REGULAR">Savbienesraices</h3>
+                       </div>
+                    </div>
+        """
+        # ✅ INICIALIZAR CAMPO PRIMERO
+        datos['vendedor'] = None
+        
+        try:
+            print("👤 Extrayendo información del vendedor...")
+            
+            # ===== ESTRATEGIA 1: Selectores CSS cascada para el vendedor =====
+            vendedor_selectors = [
+                '.ui-vip-profile-info__info-container .ui-vip-profile-info__info-link h3',  # 1. Selector completo específico
+                '.ui-vip-profile-info__info-container h3',                                  # 2. Selector directo al h3
+                '.ui-vip-profile-info__info-link h3',                                       # 3. Desde el link directo
+                'h3.ui-pdp-color--BLACK.ui-pdp-size--XSMALL.ui-pdp-family--REGULAR'        # 4. Por clases específicas del h3
+            ]
+            
+            vendedor_text = None
+            
+            for selector in vendedor_selectors:
+                try:
+                    vendedor_element = await page.query_selector(selector)
+                    if vendedor_element:
+                        vendedor_text = await vendedor_element.text_content()
+                        if vendedor_text and len(vendedor_text.strip()) > 1:
+                            vendedor_text = vendedor_text.strip()
+                            print(f"  🎯 Vendedor encontrado con '{selector}': '{vendedor_text}'")
+                            break
+                except Exception as e:
+                    print(f"     ⚠️ Error con selector {selector}: {e}")
+                    continue
+            
+            # ===== ASIGNAR RESULTADO =====
+            if vendedor_text:
+                datos['vendedor'] = vendedor_text
+                print(f"  ✅ Vendedor extraído: '{datos['vendedor']}'")
+            else:
+                print("  ⚠️ No se pudo extraer información del vendedor")
+                datos['vendedor'] = "No disponible"
                 
         except Exception as e:
-            print(f"⚠️ Error extrayendo tipo: {e}")
-    
+            print(f"⚠️ Error extrayendo vendedor: {e}")
+            # Garantizar valor por defecto en caso de error
+            datos['vendedor'] = "Error en extracción"
+
     async def _extraer_direccion(self, page, datos):
         """Extrae dirección usando múltiples estrategias mejoradas"""
         try:
