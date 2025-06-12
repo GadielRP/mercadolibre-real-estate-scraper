@@ -275,6 +275,43 @@ python --version
 # Espacio en disco: 2GB+ libre
 ```
 
+### **Instalación Específica por Sistema Operativo**
+
+#### **🍎 macOS (Recomendado)**
+```bash
+# 1. Instalar Homebrew (si no está instalado)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. Instalar Python 3.8+ con Homebrew
+brew install python@3.11
+
+# 3. Verificar instalación
+python3 --version
+pip3 --version
+
+# 4. Instalar Xcode Command Line Tools (si es necesario)
+xcode-select --install
+```
+
+#### **🪟 Windows**
+```bash
+# Descargar Python desde python.org
+# Asegurar que pip esté incluido en la instalación
+python --version
+pip --version
+```
+
+#### **🐧 Linux (Ubuntu/Debian)**
+```bash
+# Instalar Python y pip
+sudo apt update
+sudo apt install python3 python3-pip
+
+# Verificar instalación
+python3 --version
+pip3 --version
+```
+
 ### **Instalación Paso a Paso**
 
 **1. Clonar o Descargar el Proyecto**
@@ -284,18 +321,52 @@ cd scrapping_mercadolibre
 ```
 
 **2. Instalar Dependencias de Python**
+
+#### **🍎 Para macOS:**
 ```bash
-# Instalar todas las dependencias (actualizadas)
+# Crear entorno virtual (recomendado)
+python3 -m venv venv
+source venv/bin/activate
+
+# Instalar dependencias
+pip3 install -r requirements.txt
+
+# Verificar instalación exitosa
+pip3 show playwright
+pip3 show pydantic
+```
+
+#### **🪟 Para Windows:**
+```bash
+# Crear entorno virtual (recomendado)
+python -m venv venv
+venv\Scripts\activate
+
+# Instalar dependencias
 pip install -r requirements.txt
 
 # Verificar instalación exitosa
-pip list | grep playwright
-pip list | grep pydantic
+pip list | findstr playwright
+pip list | findstr pydantic
+```
+
+#### **🐧 Para Linux:**
+```bash
+# Crear entorno virtual (recomendado)
+python3 -m venv venv
+source venv/bin/activate
+
+# Instalar dependencias
+pip3 install -r requirements.txt
+
+# Verificar instalación exitosa
+pip3 list | grep playwright
+pip3 list | grep pydantic
 ```
 
 **3. Configurar Playwright (Browser Automation)**
 ```bash
-# Instalar browser Chromium
+# Instalar browser Chromium (todos los sistemas)
 playwright install chromium
 
 # Verificar instalación
@@ -303,9 +374,23 @@ playwright --version
 ```
 
 **4. Verificar Configuración**
+
+#### **🍎 Para macOS:**
+```bash
+# Ejecutar test rápido (opcional)
+python3 -c "from models import ConfiguracionHibridaUltraAvanzada; print('✅ Configuración OK')"
+```
+
+#### **🪟 Para Windows:**
 ```bash
 # Ejecutar test rápido (opcional)
 python -c "from models import ConfiguracionHibridaUltraAvanzada; print('✅ Configuración OK')"
+```
+
+#### **🐧 Para Linux:**
+```bash
+# Ejecutar test rápido (opcional)
+python3 -c "from models import ConfiguracionHibridaUltraAvanzada; print('✅ Configuración OK')"
 ```
 
 ### **Configuración del Sistema**
@@ -343,9 +428,22 @@ EXTRACTION_CONFIG = {
 
 ### **✨ Ejecución Principal (Recomendada)**
 
+#### **🍎 Para macOS:**
+```bash
+# Script principal con menú interactivo
+python3 main.py
+```
+
+#### **🪟 Para Windows:**
 ```bash
 # Script principal con menú interactivo
 python main.py
+```
+
+#### **🐧 Para Linux:**
+```bash
+# Script principal con menú interactivo
+python3 main.py
 ```
 
 **Opciones del menú:**
@@ -364,9 +462,22 @@ python main.py
 
 ### **🧪 Testing y Debugging**
 
+#### **🍎 Para macOS:**
+```bash
+# Test de URL individual para debugging
+python3 test_single_url.py
+```
+
+#### **🪟 Para Windows:**
 ```bash
 # Test de URL individual para debugging
 python test_single_url.py
+```
+
+#### **🐧 Para Linux:**
+```bash
+# Test de URL individual para debugging
+python3 test_single_url.py
 ```
 
 **Funcionalidades del test:**
@@ -382,7 +493,12 @@ python test_single_url.py
 
 #### **Escenario 1: Análisis de Mercado (50 propiedades)**
 ```bash
+# macOS/Linux
+python3 main.py
+
+# Windows
 python main.py
+
 # Seleccionar: 1 (Scraping Masivo)
 # Ingresar: 50
 # Tiempo estimado: ~15 minutos
@@ -391,7 +507,12 @@ python main.py
 
 #### **Escenario 2: Test Rápido (5 propiedades)**
 ```bash
+# macOS/Linux
+python3 main.py
+
+# Windows
 python main.py
+
 # Seleccionar: 1 (Scraping Masivo)
 # Ingresar: 5
 # Tiempo estimado: ~2 minutos
@@ -400,7 +521,12 @@ python main.py
 
 #### **Escenario 3: Debugging URL Específica**
 ```bash
+# macOS/Linux
+python3 test_single_url.py
+
+# Windows
 python test_single_url.py
+
 # Pegar URL específica de MercadoLibre
 # Resultado: Análisis detallado de extracción
 ```
@@ -751,6 +877,18 @@ pre-commit install
 | Fallos de extracción | **RESUELTO**: 100% efectividad validada |
 | Rate limiting muy agresivo | **OPTIMIZADO**: 4 RPM validado en producción |
 
+### **🍎 Troubleshooting Específico para macOS**
+
+| Problema Mac | Solución |
+|--------------|----------|
+| `python: command not found` | Usar `python3` en lugar de `python` |
+| `pip: command not found` | Usar `pip3` en lugar de `pip` |
+| Error de permisos al instalar | Usar entorno virtual: `python3 -m venv venv` |
+| Xcode Command Line Tools faltantes | `xcode-select --install` |
+| Homebrew no instalado | `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` |
+| Error SSL en Playwright | `pip3 install --upgrade certifi` |
+| Problemas con M1/M2 (Apple Silicon) | `arch -x86_64 pip3 install -r requirements.txt` (si es necesario) |
+
 ### **Sistema de Monitoreo**
 
 **Indicadores de Salud del Sistema:**
@@ -851,10 +989,36 @@ Este proyecto es de uso privado y está diseñado exclusivamente para fines de i
 
 ## 🚀 **Quick Start Validado**
 
+### **🍎 Para macOS:**
 ```bash
 # Instalación rápida validada
 git clone [repository-url]
 cd scrapping_mercadolibre
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+playwright install chromium
+
+# Ejecución con script principal
+python3 main.py
+# Seleccionar: 1 (Scraping Masivo)
+# Ingresar: 5 (para prueba rápida)
+
+# Test de URL individual (opcional)
+python3 test_single_url.py
+# Pegar URL de MercadoLibre para test
+
+# Verificar resultados exitosos
+ls -la *.json
+```
+
+### **🪟 Para Windows:**
+```bash
+# Instalación rápida validada
+git clone [repository-url]
+cd scrapping_mercadolibre
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 playwright install chromium
 
@@ -865,6 +1029,29 @@ python main.py
 
 # Test de URL individual (opcional)
 python test_single_url.py
+# Pegar URL de MercadoLibre para test
+
+# Verificar resultados exitosos
+dir *.json
+```
+
+### **🐧 Para Linux:**
+```bash
+# Instalación rápida validada
+git clone [repository-url]
+cd scrapping_mercadolibre
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+playwright install chromium
+
+# Ejecución con script principal
+python3 main.py
+# Seleccionar: 1 (Scraping Masivo)
+# Ingresar: 5 (para prueba rápida)
+
+# Test de URL individual (opcional)
+python3 test_single_url.py
 # Pegar URL de MercadoLibre para test
 
 # Verificar resultados exitosos
